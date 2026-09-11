@@ -1,0 +1,22 @@
+[project]
+name = "netology-aiagnt"
+version = "0.1.0"
+requires-python = ">=3.14.5"
+dependencies = [
+    "pydantic",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "ty",
+    "auto-typing-final",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["ai_agent"]
+testpaths = ["tests"]
+
+[tool.ty.environment]
+extra-paths = ["ai_agent"]
