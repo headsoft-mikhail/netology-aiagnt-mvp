@@ -1,0 +1,43 @@
+paths:
+  input: src/ai_agent/rag/knowledge_base/raw
+  prepared: src/ai_agent/rag/knowledge_base/prepared
+  chunks: src/ai_agent/rag/knowledge_base/chunks
+  embeddings: src/ai_agent/rag/knowledge_base/embeddings
+  vector_store: src/ai_agent/rag/knowledge_base/vector_store
+
+parsing:
+  supported_formats:
+    - txt
+    - json
+    - html
+
+cleaning:
+  remove_empty_documents: true
+
+normalization:
+  unicode_form: NFC
+
+deduplication:
+  exact: true
+  near_duplicate: true
+  similarity_threshold: 0.65
+  permutations_number: 128
+
+chunking:
+  strategy: sentence
+  chunk_size: 220
+  chunk_overlap: 50
+  tokenizer_model: text-embedding-3-small
+
+embedding:
+  model: intfloat/multilingual-e5-base
+
+vector_store:
+  collection_name: store_knowledge
+  recreate_collection: true
+  store_type: qdrant
+  distance: cosine
+  vectors_dimensions: 768
+  upload_batch_size: 100
+  search_top_k: 5
+  search_test_queries: 3

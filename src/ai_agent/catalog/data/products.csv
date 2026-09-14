@@ -1,0 +1,21 @@
+sku,name,category,brand,price_rub,in_stock,wifi_generation,max_wireless_speed_mbps,wan_speed_mbps,lan_ports,mesh_support,nodes,coverage_sqm,port_count,port_speed_mbps,managed,poe,connection_type
+RTR-TP-AX23,TP-Link Archer AX23,router,TP-Link,6490,true,6,1800,1000,4,true,,,,,,,
+RTR-KN-SPR,Keenetic Sprinter,router,Keenetic,7990,true,6,3000,1000,4,true,,,,,,,
+RTR-AS-AX57,ASUS RT-AX57,router,ASUS,9990,true,6,3000,1000,4,true,,,,,,,
+RTR-XM-AX3,Xiaomi Router AX3000,router,Xiaomi,5290,false,6,2976,1000,3,true,,,,,,,
+RTR-TP-BE65,TP-Link Archer BE65,router,TP-Link,24990,true,7,9214,2500,4,true,,,,,,,
+RTR-KN-GIGA,Keenetic Giga,router,Keenetic,13990,true,6,3600,2500,4,true,,,,,,,
+MSH-TP-X50-2,TP-Link Deco X50 2-pack,mesh_system,TP-Link,16990,true,6,3000,1000,,true,2,420,,,,,
+MSH-AS-XD5-2,ASUS ZenWiFi XD5 2-pack,mesh_system,ASUS,21990,true,6,3000,1000,,true,2,450,,,,,
+MSH-XM-AX3-2,Xiaomi Mesh System AX3000 2-pack,mesh_system,Xiaomi,11990,true,6,2976,1000,,true,2,370,,,,,
+MSH-TP-BE65-3,TP-Link Deco BE65 3-pack,mesh_system,TP-Link,79990,false,7,11000,2500,,true,3,650,,,,,
+SWT-TP-SG108,TP-Link TL-SG108,network_switch,TP-Link,2990,true,,,,,,,,8,1000,false,false,
+SWT-DL-DGS1100,D-Link DGS-1100-08V2,network_switch,D-Link,4990,true,,,,,,,,8,1000,true,false,
+SWT-TP-SG108PE,TP-Link TL-SG108PE,network_switch,TP-Link,6990,true,,,,,,,,8,1000,true,true,
+SWT-ZX-MG105,Zyxel MG-105,network_switch,Zyxel,11990,false,,,,,,,,5,2500,false,false,
+ADP-TP-T3U,TP-Link Archer T3U Plus,wifi_adapter,TP-Link,2490,true,5,1300,,,,,,,,,,usb
+ADP-AS-AX56,ASUS USB-AX56,wifi_adapter,ASUS,6490,true,6,1800,,,,,,,,,,usb
+ADP-TP-TX3000E,TP-Link Archer TX3000E,wifi_adapter,TP-Link,5990,true,6,3000,,,,,,,,,,pci_e
+AP-TP-EAP610,TP-Link EAP610,access_point,TP-Link,10990,true,6,1800,,,,,,,,,true,
+AP-UB-U6P,Ubiquiti UniFi 6 Plus,access_point,Ubiquiti,14990,true,6,3000,,,,,,,,,true,
+AP-MK-CAPAX,MikroTik cAP ax,access_point,MikroTik,15990,false,6,1800,,,,,,,,,true,

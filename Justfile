@@ -28,8 +28,39 @@ lint:
     uv run ruff check --fix .
     uv run ty check .
 
-test:
+test: prepare_agent
     uv run pytest
+    just clear_runtime
 
-run:
-    uv run python ai_agent
+catalog_restore:
+    uv run python -m ai_agent.catalog restore
+
+catalog_clear:
+    uv run python -m ai_agent.catalog clear
+
+memory_clear:
+    uv run python -m ai_agent.memory clear
+
+rag_prepare:
+    uv run python -m ai_agent.rag prepare
+
+rag_chunk:
+    uv run python -m ai_agent.rag chunk
+
+rag_embedding:
+    uv run python -m ai_agent.rag embedding
+
+rag_vectorstore:
+    uv run python -m ai_agent.rag vector_store
+
+rag_clear:
+    uv run python -m ai_agent.rag clear
+
+rag_rebuild: rag_clear rag_prepare rag_chunk rag_embedding rag_vectorstore
+
+prepare_agent: catalog_restore rag_rebuild
+
+run_agent:
+    uv run python -m ai_agent
+
+clear_runtime: memory_clear catalog_clear rag_clear

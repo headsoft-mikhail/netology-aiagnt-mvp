@@ -1,57 +1,33 @@
-import json
 import pathlib
 import typing
 
-import agent
-import constants
-import database
 import pytest
-import tools
 
-MEMORY_REQUEST: typing.Final = "На каком проекте я сейчас работаю и какой мой язык?"
-EXISTING_ENGINEER_REQUEST: typing.Final = (
-    f"Проверь мои доступы к серверам. Мой ID {constants.EXISTING_ENGINEER_ID}"
-)
-INEXISTENT_ENGINEER_REQUEST: typing.Final = (
-    f"Посмотри права для инженера {constants.INEXISTENT_ENGINEER_ID}"
-)
+from ai_agent import agent, contracts
+from ai_agent.memory import repository as memory_repository
+
+MEMORY_REQUEST: typing.Final = "Какой бюджет я указывал?"
+TEST_USER_ID: typing.Final = "test_user"
+TEST_USER_FACTS: typing.Final = "Бюджет до 10 000 рублей"
 
 
 @pytest.fixture
 def agent_runner(tmp_path: pathlib.Path) -> agent.MockAgentRunner:
-    db: typing.Final = database.SQLiteMemoryStore(str(tmp_path / "memory.db"))
+    db: typing.Final = memory_repository.MemoryRepository(database_path=tmp_path / "memory.db")
+    db.save_fact(TEST_USER_ID, TEST_USER_FACTS)
     return agent.MockAgentRunner(db)
 
 
 def test_agent_uses_long_term_memory(agent_runner: agent.MockAgentRunner) -> None:
-    result: typing.Final = agent_runner.run(constants.TEST_USER_ID, MEMORY_REQUEST)
+    result: typing.Final = agent_runner.run(TEST_USER_ID, MEMORY_REQUEST)
 
-    assert constants.TEST_USER_PROJECT in result["agent_response"]
-    assert constants.TEST_USER_LANGUAGE in result["agent_response"]
-    assert result["tool_called"] is None
+    assert TEST_USER_FACTS in result.answer
+    assert result.status is contracts.AgentRunStatus.COMPLETED
 
 
-def test_agent_calls_tool_for_existing_engineer(
+def test_agent_requests_clarification_for_unspecific_request(
     agent_runner: agent.MockAgentRunner,
 ) -> None:
-    result: typing.Final = agent_runner.run(
-        constants.TEST_USER_ID, EXISTING_ENGINEER_REQUEST
-    )
+    result: typing.Final = agent_runner.run(TEST_USER_ID, "Помоги мне")
 
-    assert result["tool_called"] == tools.PERMISSIONS_TOOL_NAME
-    assert result["tool_args"] == {"engineer_id": constants.EXISTING_ENGINEER_ID}
-    assert constants.PRODENV_PERMISSION_R in result["agent_response"]
-
-
-def test_agent_handles_inexistent_engineer_error(
-    agent_runner: agent.MockAgentRunner,
-) -> None:
-    result: typing.Final = agent_runner.run(
-        constants.TEST_USER_ID, INEXISTENT_ENGINEER_REQUEST
-    )
-    tool_result: typing.Final = json.loads(result["tool_result"])
-
-    assert result["tool_called"] == tools.PERMISSIONS_TOOL_NAME
-    assert tool_result["status"] == tools.ERROR_STATUS
-    assert tools.INEXISTENT_ENGINEER_ERROR in tool_result["message"]
-    assert tools.INEXISTENT_ENGINEER_ERROR in result["agent_response"]
+    assert result.status is contracts.AgentRunStatus.NEEDS_INPUT

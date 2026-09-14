@@ -1,4 +1,15 @@
 .venv/
+.ruff_cache/
+.pytest_cache/
+
 __pycache__/
 *.py[cod]
 .DS_Store
+
+.env
+
+src/ai_agent/rag/knowledge_base/prepared/
+src/ai_agent/rag/knowledge_base/chunks/
+src/ai_agent/rag/knowledge_base/embeddings/
+src/ai_agent/rag/knowledge_base/vector_store/
+src/ai_agent/catalog/data/products.db
