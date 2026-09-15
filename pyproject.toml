@@ -6,6 +6,7 @@ dependencies = [
     "beautifulsoup4",
     "datasketch",
     "pydantic",
+    "pydantic_settings",
     "python-dotenv",
     "pyyaml",
     "qdrant-client",
@@ -17,6 +18,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest",
+    "faker",
     "ruff",
     "ty",
     "auto-typing-final",

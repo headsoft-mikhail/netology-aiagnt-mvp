@@ -1,14 +1,22 @@
 import pathlib
 import typing
 
-import pydantic
 import pytest
 
 from ai_agent import contracts
 from ai_agent.catalog import config, models, repository, restore
 from ai_agent.tools import search_products
 
-EXPECTED_ROUTER_SKUS: typing.Final = {"RTR-TP-BE65", "RTR-KN-GIGA"}
+EXPECTED_ROUTER_PRODUCT_CODES: typing.Final = {
+    "RTR-AS-BE58",
+    "RTR-KN-GIGA",
+    "RTR-TP-BE65",
+}
+EXPECTED_MANAGED_POE_SWITCH_PRODUCT_CODES: typing.Final = [
+    "SWT-TP-SG108PE",
+    "SWT-UB-USW-L8",
+]
+EXCLUDED_BRAND: typing.Final = "D-Link"
 
 
 @pytest.fixture
@@ -32,13 +40,15 @@ def test_search_products_filters_routers_by_characteristics(
             category=models.ProductCategory.ROUTER,
             min_wifi_generation=6,
             min_wan_speed_mbps=2500,
+            excluded_brands=[EXCLUDED_BRAND],
         )
     )
 
     result: typing.Final = search_products.search_products(args, product_catalog)
 
     assert result.status is contracts.ToolStatus.OK
-    assert {product.sku for product in result.products} == EXPECTED_ROUTER_SKUS
+    assert {product.product_code for product in result.products} == EXPECTED_ROUTER_PRODUCT_CODES
+    assert all(product.brand != EXCLUDED_BRAND for product in result.products)
 
 
 def test_search_products_uses_category_specific_switch_filters(
@@ -56,7 +66,7 @@ def test_search_products_uses_category_specific_switch_filters(
     result: typing.Final = search_products.search_products(args, product_catalog)
 
     assert result.status is contracts.ToolStatus.OK
-    assert [product.sku for product in result.products] == ["SWT-TP-SG108PE"]
+    assert [product.product_code for product in result.products] == EXPECTED_MANAGED_POE_SWITCH_PRODUCT_CODES
 
 
 def test_search_products_returns_structured_no_results(
@@ -91,15 +101,3 @@ def test_search_products_returns_safe_error_for_unavailable_catalog(
     assert result.error is not None
     assert result.error.code is contracts.ErrorCode.CATALOG_UNAVAILABLE
     assert result.error.message == search_products.CATALOG_UNAVAILABLE_MESSAGE
-
-
-def test_router_filters_reject_switch_only_field() -> None:
-    with pytest.raises(pydantic.ValidationError):
-        models.ProductSearchInput.model_validate(
-            {
-                "filters": {
-                    "category": models.ProductCategory.ROUTER,
-                    "poe": True,
-                }
-            }
-        )

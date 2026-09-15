@@ -4,6 +4,7 @@
 
 __pycache__/
 *.py[cod]
+*.log
 .DS_Store
 
 .env
@@ -13,3 +14,4 @@ src/ai_agent/rag/knowledge_base/chunks/
 src/ai_agent/rag/knowledge_base/embeddings/
 src/ai_agent/rag/knowledge_base/vector_store/
 src/ai_agent/catalog/data/products.db
+src/ai_agent/memory/data/agent_memory.db

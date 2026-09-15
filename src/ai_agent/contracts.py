@@ -1,3 +1,4 @@
+import datetime
 import enum
 
 import pydantic
@@ -9,6 +10,8 @@ class AgentAction(enum.StrEnum):
     SEARCH_KNOWLEDGE_BASE = "search_knowledge_base"
     SEARCH_PRODUCTS = "search_products"
     UPDATE_MEMORY = "update_memory"
+    DELETE_MEMORY = "delete_memory"
+    CLEAR_MEMORY = "clear_memory"
     UNSUPPORTED = "unsupported"
 
 
@@ -17,6 +20,7 @@ class AgentRunStatus(enum.StrEnum):
     RUNNING = "running"
     COMPLETED = "completed"
     NEEDS_INPUT = "needs_input"
+    NOT_FOUND = "not_found"
     FAILED = "failed"
 
 
@@ -31,7 +35,24 @@ class ErrorCode(enum.StrEnum):
     NO_RESULTS = "no_results"
     KNOWLEDGE_BASE_UNAVAILABLE = "knowledge_base_unavailable"
     CATALOG_UNAVAILABLE = "catalog_unavailable"
+    MEMORY_UNAVAILABLE = "memory_unavailable"
+    LLM_UNAVAILABLE = "llm_unavailable"
+    INVALID_LLM_RESPONSE = "invalid_llm_response"
     INTERNAL_ERROR = "internal_error"
+
+
+class MemoryType(enum.StrEnum):
+    LONG_TERM = "long_term"
+
+
+class MemoryKey(enum.StrEnum):
+    BUDGET_RUB = "budget_rub"
+    PREFERRED_BRANDS = "preferred_brands"
+    EXCLUDED_BRANDS = "excluded_brands"
+    AREA_SQM = "area_sqm"
+    DEVICE_COUNT = "device_count"
+    TARIFF_SPEED_MBPS = "tariff_speed_mbps"
+    CURRENT_EQUIPMENT = "current_equipment"
 
 
 class AgentRequest(pydantic.BaseModel):
@@ -52,9 +73,23 @@ class ToolError(pydantic.BaseModel):
 class MemoryFact(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    key: str = pydantic.Field(min_length=1)
+    id: int = pydantic.Field(gt=0)
+    user_id: str = pydantic.Field(min_length=1)
+    session_id: str = pydantic.Field(min_length=1)
+    memory_type: MemoryType
+    key: MemoryKey
     value: str = pydantic.Field(min_length=1)
     source: str = pydantic.Field(min_length=1)
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+    expires_at: datetime.datetime | None = None
+
+
+class MemoryUpdate(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    key: MemoryKey
+    value: str = pydantic.Field(min_length=1)
 
 
 class KnowledgeFragment(pydantic.BaseModel):
@@ -92,5 +127,9 @@ class AgentResponse(pydantic.BaseModel):
     status: AgentRunStatus
     answer: str = pydantic.Field(min_length=1)
     sources: list[str] = pydantic.Field(default_factory=list)
-    product_skus: list[str] = pydantic.Field(default_factory=list)
+    product_codes: list[str] = pydantic.Field(default_factory=list)
+    tool_calls: list[ToolCallTrace] = pydantic.Field(default_factory=list)
+    memory_used: list[int] = pydantic.Field(default_factory=list)
+    request_id: str = pydantic.Field(min_length=1)
+    session_id: str = pydantic.Field(min_length=1)
     errors: list[ToolError] = pydantic.Field(default_factory=list)

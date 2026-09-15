@@ -27,6 +27,14 @@ class ProductsRepository(sqlite.BaseSQLiteResource):
                 placeholders: typing.Final = ", ".join("?" for _ in normalized_brands)
                 conditions.append(f"lower(brand) IN ({placeholders})")
                 parameters.extend(normalized_brands)
+        if filters.excluded_brands:
+            normalized_excluded_brands: typing.Final = [
+                brand.strip().lower() for brand in filters.excluded_brands if brand.strip()
+            ]
+            if normalized_excluded_brands:
+                excluded_placeholders: typing.Final = ", ".join("?" for _ in normalized_excluded_brands)
+                conditions.append(f"lower(brand) NOT IN ({excluded_placeholders})")
+                parameters.extend(normalized_excluded_brands)
 
         if isinstance(filters, models.RouterFilters):
             self._add_minimum(conditions, parameters, "wifi_generation", filters.min_wifi_generation)
@@ -59,7 +67,7 @@ class ProductsRepository(sqlite.BaseSQLiteResource):
         query: typing.Final = f"""
             SELECT * FROM products
             WHERE {" AND ".join(conditions)}
-            ORDER BY in_stock DESC, price_rub ASC, sku ASC
+            ORDER BY in_stock DESC, price_rub ASC, product_code ASC
             LIMIT ?
         """
 

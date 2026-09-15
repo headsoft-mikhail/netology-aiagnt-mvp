@@ -1,44 +1,141 @@
 import dataclasses
+import datetime
+import sqlite3
 import typing
 
-from ai_agent import sqlite
+from ai_agent import contracts, sqlite
 
-MISSING_USER_FACTS_STR: typing.Final = "Факты о пользователе отсутствуют."
+SENSITIVE_MARKERS: typing.Final = (
+    "пароль",
+    "password",
+    "token",
+    "токен",
+    "номер карты",
+    "cvv",
+)
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
 class MemoryRepository(sqlite.BaseSQLiteResource):
     def __post_init__(self) -> None:
+        self.database_path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as connection:
             connection.execute("""
-                CREATE TABLE IF NOT EXISTS user_profiles (
-                    user_id TEXT PRIMARY KEY,
-                    facts TEXT
+                CREATE TABLE IF NOT EXISTS memory_facts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    session_id TEXT NOT NULL,
+                    memory_type TEXT NOT NULL,
+                    key TEXT NOT NULL,
+                    value TEXT NOT NULL,
+                    source TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    expires_at TEXT,
+                    UNIQUE (user_id, memory_type, key)
                 )
             """)
 
-    def get_facts(self, user_id: str) -> str:
-        """Получить факты из долговременной памяти пользователя."""
-        with self.connect() as connection:
-            cursor: typing.Final = connection.execute(
-                "SELECT facts FROM user_profiles WHERE user_id = ?",
-                (user_id,),
-            )
-            row: typing.Final = cursor.fetchone()
-        return row[0] if row else MISSING_USER_FACTS_STR
+    def save_fact(
+        self,
+        user_id: str,
+        key: contracts.MemoryKey,
+        value: str,
+        *,
+        source: str,
+        session_id: str = "global",
+        expires_at: datetime.datetime | None = None,
+    ) -> contracts.MemoryFact:
+        normalized_user_id: typing.Final = user_id.strip()
+        normalized_value: typing.Final = value.strip()
+        normalized_source: typing.Final = source.strip()
+        if not normalized_user_id or not normalized_value or not normalized_source:
+            raise ValueError("Memory fields must not be empty.")
+        if any(marker in normalized_value.lower() for marker in SENSITIVE_MARKERS):
+            raise ValueError("Sensitive data must not be stored in memory.")
 
-    def save_fact(self, user_id: str, new_facts: str) -> None:
-        """Сохранить или заменить факты пользователя."""
+        now: typing.Final = datetime.datetime.now(datetime.UTC)
         with self.connect() as connection:
             connection.execute(
                 """
-                INSERT OR REPLACE INTO user_profiles (user_id, facts)
-                VALUES (?, ?)
+                INSERT INTO memory_facts (
+                    user_id, session_id, memory_type, key, value, source,
+                    created_at, updated_at, expires_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT (user_id, memory_type, key) DO UPDATE SET
+                    session_id = excluded.session_id,
+                    value = excluded.value,
+                    source = excluded.source,
+                    updated_at = excluded.updated_at,
+                    expires_at = excluded.expires_at
                 """,
-                (user_id, new_facts),
+                (
+                    normalized_user_id,
+                    session_id,
+                    contracts.MemoryType.LONG_TERM,
+                    key,
+                    normalized_value,
+                    normalized_source,
+                    now.isoformat(),
+                    now.isoformat(),
+                    expires_at.isoformat() if expires_at else None,
+                ),
+            )
+            connection.row_factory = sqlite3.Row
+            row: typing.Final = connection.execute(
+                """
+                SELECT * FROM memory_facts
+                WHERE user_id = ? AND memory_type = ? AND key = ?
+                """,
+                (normalized_user_id, contracts.MemoryType.LONG_TERM, key),
+            ).fetchone()
+        if row is None:
+            raise RuntimeError("Saved memory fact was not found.")
+        return self._to_fact(row)
+
+    def get_relevant(self, user_id: str, *, limit: int) -> list[contracts.MemoryFact]:
+        now: typing.Final = datetime.datetime.now(datetime.UTC).isoformat()
+        with self.connect() as connection:
+            connection.row_factory = sqlite3.Row
+            rows: typing.Final = connection.execute(
+                """
+                SELECT * FROM memory_facts
+                WHERE user_id = ?
+                  AND memory_type = ?
+                  AND (expires_at IS NULL OR expires_at > ?)
+                ORDER BY updated_at DESC
+                LIMIT ?
+                """,
+                (user_id, contracts.MemoryType.LONG_TERM, now, limit),
+            ).fetchall()
+        return [self._to_fact(row) for row in rows]
+
+    def delete_fact(self, user_id: str, key: contracts.MemoryKey) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                "DELETE FROM memory_facts WHERE user_id = ? AND memory_type = ? AND key = ?",
+                (user_id, contracts.MemoryType.LONG_TERM, key),
             )
 
-    def clear(self) -> None:
-        """Удалить все записи памяти, сохранив файл и схему базы данных."""
+    def clear_user(self, user_id: str) -> None:
         with self.connect() as connection:
-            connection.execute("DELETE FROM user_profiles")
+            connection.execute("DELETE FROM memory_facts WHERE user_id = ?", (user_id,))
+
+    def clear(self) -> None:
+        with self.connect() as connection:
+            connection.execute("DELETE FROM memory_facts")
+
+    @staticmethod
+    def _to_fact(row: sqlite3.Row) -> contracts.MemoryFact:
+        return contracts.MemoryFact(
+            id=row["id"],
+            user_id=row["user_id"],
+            session_id=row["session_id"],
+            memory_type=row["memory_type"],
+            key=row["key"],
+            value=row["value"],
+            source=row["source"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            expires_at=row["expires_at"],
+        )

@@ -1,4 +1,4 @@
-sku,name,category,brand,price_rub,in_stock,wifi_generation,max_wireless_speed_mbps,wan_speed_mbps,lan_ports,mesh_support,nodes,coverage_sqm,port_count,port_speed_mbps,managed,poe,connection_type
+product_code,name,category,brand,price_rub,in_stock,wifi_generation,max_wireless_speed_mbps,wan_speed_mbps,lan_ports,mesh_support,nodes,coverage_sqm,port_count,port_speed_mbps,managed,poe,connection_type
 RTR-TP-AX23,TP-Link Archer AX23,router,TP-Link,6490,true,6,1800,1000,4,true,,,,,,,
 RTR-KN-SPR,Keenetic Sprinter,router,Keenetic,7990,true,6,3000,1000,4,true,,,,,,,
 RTR-AS-AX57,ASUS RT-AX57,router,ASUS,9990,true,6,3000,1000,4,true,,,,,,,
@@ -19,3 +19,18 @@ ADP-TP-TX3000E,TP-Link Archer TX3000E,wifi_adapter,TP-Link,5990,true,6,3000,,,,,
 AP-TP-EAP610,TP-Link EAP610,access_point,TP-Link,10990,true,6,1800,,,,,,,,,true,
 AP-UB-U6P,Ubiquiti UniFi 6 Plus,access_point,Ubiquiti,14990,true,6,3000,,,,,,,,,true,
 AP-MK-CAPAX,MikroTik cAP ax,access_point,MikroTik,15990,false,6,1800,,,,,,,,,true,
+RTR-DL-R15,D-Link R15,router,D-Link,4490,true,6,1500,1000,3,true,,,,,,,
+RTR-HW-AX3,Huawei WiFi AX3,router,Huawei,5990,true,6,3000,1000,3,true,,,,,,,
+RTR-AS-BE58,ASUS TUF Gaming BE58,router,ASUS,20990,true,7,6500,2500,4,true,,,,,,,
+MSH-KN-BUDDY-2,Keenetic Buddy 6 2-pack,mesh_system,Keenetic,18990,true,6,3000,1000,,true,2,400,,,,,
+MSH-DL-M15-3,D-Link Eagle Pro AI M15 3-pack,mesh_system,D-Link,19990,true,6,1500,1000,,true,3,500,,,,,
+MSH-HW-MESH7-2,Huawei WiFi Mesh 7 2-pack,mesh_system,Huawei,27990,false,6,6600,2500,,true,2,550,,,,,
+SWT-NG-GS308,NETGEAR GS308,network_switch,NETGEAR,3490,true,,,,,,,,8,1000,false,false,
+SWT-MK-CSS610,MikroTik CSS610-8G-2S+IN,network_switch,MikroTik,12990,true,,,,,,,,10,10000,true,false,
+SWT-UB-USW-L8,Ubiquiti Lite 8 PoE,network_switch,Ubiquiti,16990,true,,,,,,,,8,1000,true,true,
+ADP-DL-DWA-X1850,D-Link DWA-X1850,wifi_adapter,D-Link,3990,true,6,1800,,,,,,,,,,usb
+ADP-TN-AXE5400,Tenda E33,wifi_adapter,Tenda,5490,true,6,5400,,,,,,,,,,pci_e
+ADP-AS-USBAC53,ASUS USB-AC53 Nano,wifi_adapter,ASUS,1990,false,5,1200,,,,,,,,,,usb
+AP-UB-U7P,Ubiquiti UniFi U7 Pro,access_point,Ubiquiti,23990,true,7,9300,,,,,,,,,true,
+AP-TP-EAP225,TP-Link EAP225,access_point,TP-Link,6990,true,5,1350,,,,,,,,,true,
+AP-MK-HAPAC3,MikroTik hAP ac3,access_point,MikroTik,8990,true,5,1200,,,,,,,,,false,

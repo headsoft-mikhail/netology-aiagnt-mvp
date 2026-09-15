@@ -60,7 +60,10 @@ rag_rebuild: rag_clear rag_prepare rag_chunk rag_embedding rag_vectorstore
 
 prepare_agent: catalog_restore rag_rebuild
 
-run_agent:
-    uv run python -m ai_agent
+run_agent *args:
+    uv run --env-file .env python -m ai_agent {{args}}
+
+run_agent_once question *args:
+    uv run --env-file .env python -m ai_agent {{args}} "{{question}}"
 
 clear_runtime: memory_clear catalog_clear rag_clear

@@ -22,7 +22,7 @@ class ConnectionType(enum.StrEnum):
 class Product(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    sku: str = pydantic.Field(min_length=1)
+    product_code: str = pydantic.Field(min_length=1)
     name: str = pydantic.Field(min_length=1)
     category: ProductCategory
     brand: str = pydantic.Field(min_length=1)
@@ -47,6 +47,7 @@ class BaseProductFilters(pydantic.BaseModel):
 
     max_price_rub: int | None = pydantic.Field(default=None, gt=0)
     brands: list[str] = pydantic.Field(default_factory=list)
+    excluded_brands: list[str] = pydantic.Field(default_factory=list)
     in_stock: bool | None = True
 
 

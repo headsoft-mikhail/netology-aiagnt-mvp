@@ -69,7 +69,7 @@ def restore_catalog(
         with sqlite3.connect(temporary_db_path) as connection:
             connection.execute("""
                 CREATE TABLE products (
-                    sku TEXT PRIMARY KEY,
+                    product_code TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
                     category TEXT NOT NULL,
                     brand TEXT NOT NULL,
@@ -92,12 +92,12 @@ def restore_catalog(
             connection.executemany(
                 """
                 INSERT INTO products (
-                    sku, name, category, brand, price_rub, in_stock,
+                    product_code, name, category, brand, price_rub, in_stock,
                     wifi_generation, max_wireless_speed_mbps, wan_speed_mbps,
                     lan_ports, mesh_support, nodes, coverage_sqm, port_count,
                     port_speed_mbps, managed, poe, connection_type
                 ) VALUES (
-                    :sku, :name, :category, :brand, :price_rub, :in_stock,
+                    :product_code, :name, :category, :brand, :price_rub, :in_stock,
                     :wifi_generation, :max_wireless_speed_mbps, :wan_speed_mbps,
                     :lan_ports, :mesh_support, :nodes, :coverage_sqm, :port_count,
                     :port_speed_mbps, :managed, :poe, :connection_type

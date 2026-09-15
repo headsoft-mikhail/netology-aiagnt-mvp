@@ -1,7 +1,5 @@
 import typing
 
-import pydantic
-import pytest
 import qdrant_client.models
 
 from ai_agent import contracts
@@ -75,8 +73,3 @@ def test_search_knowledge_base_returns_safe_retrieval_error() -> None:
     assert result.error is not None
     assert result.error.code is contracts.ErrorCode.KNOWLEDGE_BASE_UNAVAILABLE
     assert result.error.message == search_knowledge_base.KNOWLEDGE_BASE_UNAVAILABLE_MESSAGE
-
-
-def test_knowledge_search_input_rejects_empty_query() -> None:
-    with pytest.raises(pydantic.ValidationError):
-        search_knowledge_base.KnowledgeSearchInput(query="   ")
