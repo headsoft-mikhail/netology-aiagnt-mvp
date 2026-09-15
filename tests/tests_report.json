@@ -1,0 +1,348 @@
+{
+  "agent_name": "Network Equipment Store Consultant",
+  "required_test_ids": [
+    "TC-MVP-001",
+    "TC-MVP-002"
+  ],
+  "tests": [
+    {
+      "id": "TC-MVP-001",
+      "required": true,
+      "type": "main",
+      "user_id": "customer-router",
+      "session_id": "selection-router",
+      "request": "Подбери Wi-Fi 6 роутер до 10 000 рублей для тарифа 1 Гбит/с",
+      "expected": "Память, RAG и каталог участвуют в подборе; ответ содержит только артикул из каталога",
+      "actual": "Учтены бюджет и исключённый бренд, найден RTR-TP-AX23, вызваны оба поисковых Tool",
+      "tool_calls": [
+        "search_knowledge_base",
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-MAIN-002",
+      "type": "main",
+      "user_id": "customer-mesh",
+      "session_id": "selection-mesh",
+      "request": "Подбери Mesh-систему из двух модулей для площади 400 м² до 20000 рублей",
+      "expected": "Агент получает правила выбора через RAG и проверяет подходящую модель в каталоге",
+      "actual": "Вызваны оба Tool, предложен найденный артикул MSH-KN-BUDDY-2",
+      "tool_calls": [
+        "search_knowledge_base",
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-RAG-001",
+      "type": "alternative",
+      "user_id": "customer-rag-1",
+      "session_id": "knowledge-1",
+      "request": "Какой WAN-порт нужен для тарифа 1 Гбит/с?",
+      "expected": "Ответ строится по базе знаний без обращения к каталогу",
+      "actual": "Получен источник router_selection.txt и вызван только search_knowledge_base",
+      "tool_calls": [
+        "search_knowledge_base"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-RAG-002",
+      "type": "alternative",
+      "user_id": "customer-rag-2",
+      "session_id": "knowledge-2",
+      "request": "Что важно проверить перед покупкой гигабитного роутера?",
+      "expected": "Ответ опирается на найденное правило о скорости WAN-порта",
+      "actual": "RAG-контекст найден, каталог не вызывался",
+      "tool_calls": [
+        "search_knowledge_base"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-CATALOG-001",
+      "type": "alternative",
+      "user_id": "customer-catalog-1",
+      "session_id": "catalog-1",
+      "request": "Покажи USB-адаптер Wi-Fi 6 до 7000 рублей",
+      "expected": "Каталог фильтруется по категории, интерфейсу, поколению Wi-Fi и цене",
+      "actual": "Предложен только найденный артикул ADP-DL-DWA-X1850",
+      "tool_calls": [
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-CATALOG-002",
+      "type": "alternative",
+      "user_id": "customer-catalog-2",
+      "session_id": "catalog-2",
+      "request": "Нужна точка доступа Wi-Fi 7 с PoE",
+      "expected": "Каталог применяет специфичные для точки доступа фильтры",
+      "actual": "Предложен каталоговый артикул AP-UB-U7P",
+      "tool_calls": [
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-CATALOG-003",
+      "type": "alternative",
+      "user_id": "customer-catalog-3",
+      "session_id": "catalog-3",
+      "request": "Покажи управляемый коммутатор с PoE до 18000 рублей",
+      "expected": "Каталог применяет фильтры managed, PoE и максимальной цены",
+      "actual": "Предложен найденный артикул SWT-TP-SG108PE",
+      "tool_calls": [
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-CLARIFY-001",
+      "type": "alternative",
+      "user_id": "customer-clarify-1",
+      "session_id": "clarify-1",
+      "request": "Подбери устройство",
+      "expected": "Агент просит указать категорию и бюджет",
+      "actual": "Возвращён статус needs_input без вызова Tool",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-CLARIFY-002",
+      "type": "alternative",
+      "user_id": "customer-clarify-2",
+      "session_id": "clarify-2",
+      "request": "Нужно улучшить Wi-Fi",
+      "expected": "Агент просит уточнить площадь и текущую проблему",
+      "actual": "Возвращён уточняющий вопрос без поиска",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-SCOPE-001",
+      "type": "alternative",
+      "user_id": "customer-scope-1",
+      "session_id": "scope-1",
+      "request": "Подбери страховку",
+      "expected": "Агент сообщает об ограничении предметной области",
+      "actual": "Непрофильный запрос отклонён без вызова Tool",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-SCOPE-002",
+      "type": "alternative",
+      "user_id": "customer-scope-2",
+      "session_id": "scope-2",
+      "request": "Расскажи прогноз погоды",
+      "expected": "Агент не отвечает вне тематики магазина",
+      "actual": "Возвращено профильное ограничение без вызова Tool",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-MVP-002",
+      "required": true,
+      "type": "error",
+      "user_id": "customer-empty-1",
+      "session_id": "empty-1",
+      "request": "Найди роутер дешевле 100 рублей",
+      "expected": "Агент не выдумывает товар при пустом результате",
+      "actual": "Каталог вернул no_results, список артикулов пуст",
+      "tool_calls": [
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-NOT-FOUND-002",
+      "type": "error",
+      "user_id": "customer-empty-2",
+      "session_id": "empty-2",
+      "request": "Найди Mesh-систему дешевле 100 рублей",
+      "expected": "Агент корректно сообщает об отсутствии Mesh-систем",
+      "actual": "Получен status=not_found без выдуманного артикула",
+      "tool_calls": [
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-NOT-FOUND-003",
+      "type": "error",
+      "user_id": "customer-empty-3",
+      "session_id": "empty-3",
+      "request": "Найди точку доступа дешевле 100 рублей",
+      "expected": "Агент корректно сообщает об отсутствии точек доступа",
+      "actual": "Получен status=not_found и пустой список артикулов",
+      "tool_calls": [
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-VALIDATION-001",
+      "type": "error",
+      "user_id": "customer-invalid-1",
+      "session_id": "invalid-1",
+      "request": "Найди роутер с отрицательной максимальной ценой",
+      "expected": "Некорректный диапазон фильтра не передаётся в Tool",
+      "actual": "Возвращён invalid_llm_response, каталог не вызван",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-VALIDATION-002",
+      "type": "error",
+      "user_id": "customer-invalid-2",
+      "session_id": "invalid-2",
+      "request": "Найди роутер, если LLM вернула цену строкой «недорого»",
+      "expected": "Неверный тип фильтра обрабатывается без падения рантайма",
+      "actual": "Получен контролируемый invalid_llm_response",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-GROUNDING-001",
+      "type": "error",
+      "user_id": "customer-grounding",
+      "session_id": "grounding-1",
+      "request": "Найди роутер до 7000 рублей",
+      "expected": "Артикул итогового ответа должен присутствовать в результате каталога",
+      "actual": "Выдуманный артикул отклонён с invalid_llm_response",
+      "tool_calls": [
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-TOOL-ERROR-001",
+      "type": "error",
+      "user_id": "customer-tool-error",
+      "session_id": "tool-error-1",
+      "request": "Покажи роутеры в наличии",
+      "expected": "Недоступность каталога возвращается как контролируемая ошибка Tool",
+      "actual": "Получен catalog_unavailable и status=failed",
+      "tool_calls": [
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-LLM-ERROR-001",
+      "type": "error",
+      "user_id": "customer-llm-error",
+      "session_id": "llm-error-1",
+      "request": "Подбери роутер",
+      "expected": "Недоступность LLM не приводит к необработанному исключению",
+      "actual": "Получен llm_unavailable и status=failed",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-001",
+      "type": "memory",
+      "user_id": "customer-memory-1",
+      "session_id": "memory-save-brand",
+      "request": "Запомни, что я предпочитаю Keenetic",
+      "expected": "Явно указанное предпочтение сохраняется для user_id",
+      "actual": "Сохранён long-term факт preferred_brands=Keenetic",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-002",
+      "type": "memory",
+      "user_id": "customer-memory-1",
+      "session_id": "memory-save-budget",
+      "request": "Запомни мой бюджет 10000 рублей",
+      "expected": "Бюджет сохраняется как отдельный long-term факт",
+      "actual": "Сохранён факт budget_rub=10000",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-003",
+      "type": "memory",
+      "user_id": "customer-memory-1",
+      "session_id": "memory-use",
+      "request": "Подбери Wi-Fi 6 роутер до 10 000 рублей для тарифа 1 Гбит/с",
+      "expected": "Сохранённые бюджет и исключённый бренд поступают в планирование и фильтры",
+      "actual": "Оба факта загружены по user_id и применены в запросе каталога",
+      "tool_calls": [
+        "search_knowledge_base",
+        "search_products"
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-004",
+      "type": "memory",
+      "user_id": "customer-memory-1",
+      "session_id": "memory-delete",
+      "request": "Удали сохранённый бюджет",
+      "expected": "Удаляется только выбранный факт пользователя",
+      "actual": "budget_rub удалён, preferred_brands сохранён",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-005",
+      "type": "memory",
+      "user_id": "customer-memory-1",
+      "session_id": "memory-clear",
+      "request": "Удали все мои сохранённые предпочтения",
+      "expected": "Удаляются только факты запрашивающего user_id",
+      "actual": "Память пользователя очищена, данные другого user_id сохранены",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-006",
+      "type": "memory_error",
+      "user_id": "customer-memory-sensitive",
+      "session_id": "memory-sensitive",
+      "request": "Запомни пароль Wi-Fi: super-secret",
+      "expected": "Чувствительные данные не сохраняются",
+      "actual": "Репозиторий отклонил значение, память пользователя осталась пустой",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-USER-001",
+      "type": "identity",
+      "user_id": "customer-a",
+      "session_id": "user-isolation-a",
+      "request": "Удали все мои сохранённые предпочтения",
+      "expected": "Операции памяти одного user_id не затрагивают другого",
+      "actual": "Данные customer-a удалены, предпочтение customer-b сохранено",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-SESSION-001",
+      "type": "session",
+      "user_id": "customer-session",
+      "session_id": "consultation-1",
+      "request": "Подбери роутер → До 10000 рублей",
+      "expected": "Второе сообщение той же сессии получает предыдущий вопрос и ответ",
+      "actual": "Short-term history передана планировщику, после end_session история удалена",
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-SESSION-002",
+      "type": "session_error",
+      "user_id": "customer-session-b",
+      "session_id": "consultation-owned-by-a",
+      "request": "Продолжить чужую консультацию",
+      "expected": "Одна session_id не может принадлежать разным user_id в одном процессе",
+      "actual": "Запрос отклонён с invalid_input до обращения к LLM и Tools",
+      "tool_calls": [],
+      "passed": true
+    }
+  ]
+}
