@@ -15,6 +15,7 @@ from ai_agent.memory import repository as memory_repository
 from ai_agent.memory.config import memory_config
 from ai_agent.rag import config as rag_config
 from ai_agent.rag import context, retrieval
+from ai_agent.tools import registry, search_knowledge_base, search_products
 
 EXIT_SUCCESS: typing.Final = 0
 EXIT_FAILURE: typing.Final = 1
@@ -26,11 +27,15 @@ def main() -> int:
     parser.add_argument("question", nargs="?", help="Один вопрос без запуска интерактивной сессии")
     parser.add_argument(
         "--user-id",
+        "--user_id",
+        dest="user_id",
         default="local_user",
         help="Владелец долговременной памяти (по умолчанию: local_user)",
     )
     parser.add_argument(
         "--session-id",
+        "--session_id",
+        dest="session_id",
         default=None,
         help="Идентификатор текущего диалога (по умолчанию создаётся автоматически)",
     )
@@ -95,9 +100,17 @@ def create_agent() -> AgentRunner:
     return AgentRunner(
         memory=memory,
         llm=LLMService(chat_client=llm_client.LLMClient(config=llm_config.LLMConfig())),
-        catalog=ProductsRepository(database_path=catalog_config.database_path),
-        retrieval_client=retrieval.RetrievalClient(loaded_retrieval_config),
-        context_builder=context.ContextBuilder(min_score=loaded_retrieval_config.min_score),
+        tool_registry=registry.ToolRegistry(
+            tools=(
+                search_knowledge_base.KnowledgeBaseSearchTool(
+                    retrieval_client=retrieval.RetrievalClient(loaded_retrieval_config),
+                    context_builder=context.ContextBuilder(min_score=loaded_retrieval_config.min_score),
+                ),
+                search_products.ProductSearchTool(
+                    catalog=ProductsRepository(database_path=catalog_config.database_path),
+                ),
+            )
+        ),
         memory_limit=memory_config.retrieval_limit,
     )
 

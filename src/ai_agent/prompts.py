@@ -67,7 +67,7 @@ def compile_product_filters_prompt(
 def compile_final_answer_prompt(
     query: str,
     memory_facts: list[contracts.MemoryFact],
-    knowledge_result: contracts.KnowledgeSearchResult | None,
+    knowledge_result: contracts.KnowledgeBaseSearchResult | None,
     catalog_result: catalog_models.ProductSearchResult | None,
 ) -> str:
     schema: typing.Final = json.dumps(llm_models.FinalAnswerDraft.model_json_schema(), ensure_ascii=False)

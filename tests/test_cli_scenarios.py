@@ -12,6 +12,9 @@ TEST_QUESTION: typing.Final = "Подбери роутер"
 TEST_REQUEST_ID: typing.Final = "cli-test-request"
 PREPARE_COMMAND: typing.Final = "just prepare_agent"
 INTERNAL_ERROR_DETAILS: typing.Final = "internal path must not be shown"
+USER_ID_UNDERSCORE_OPTION: typing.Final = "--user_id"
+SESSION_ID_UNDERSCORE_OPTION: typing.Final = "--session_id"
+DEBUG_OPTION: typing.Final = "--debug"
 
 
 @dataclasses.dataclass
@@ -82,3 +85,49 @@ def test_startup_failure_is_reported_without_traceback(
     assert exit_code == cli.EXIT_FAILURE
     assert PREPARE_COMMAND in captured.err
     assert INTERNAL_ERROR_DETAILS not in captured.err
+
+
+def test_cli_accepts_underscore_aliases_for_identifiers(
+    monkeypatch: pytest.MonkeyPatch,
+    faker: faker_lib.Faker,
+) -> None:
+    user_id: typing.Final = faker.uuid4()
+    session_id: typing.Final = faker.uuid4()
+    received_arguments: typing.Final[dict[str, object]] = {}
+
+    def fake_start_agent(
+        actual_user_id: str,
+        actual_session_id: str | None = None,
+        *,
+        question: str | None = None,
+        show_trace: bool = False,
+    ) -> int:
+        received_arguments.update(
+            user_id=actual_user_id,
+            session_id=actual_session_id,
+            question=question,
+            show_trace=show_trace,
+        )
+        return cli.EXIT_SUCCESS
+
+    monkeypatch.setattr(cli, "start_agent", fake_start_agent)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "ai-agent",
+            DEBUG_OPTION,
+            USER_ID_UNDERSCORE_OPTION,
+            user_id,
+            SESSION_ID_UNDERSCORE_OPTION,
+            session_id,
+        ],
+    )
+
+    assert cli.main() == cli.EXIT_SUCCESS
+    assert received_arguments == {
+        "user_id": user_id,
+        "session_id": session_id,
+        "question": None,
+        "show_trace": False,
+    }

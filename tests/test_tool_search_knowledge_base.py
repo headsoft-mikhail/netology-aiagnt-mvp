@@ -3,7 +3,7 @@ import typing
 import qdrant_client.models
 
 from ai_agent import contracts
-from ai_agent.rag import context
+from ai_agent.rag import context, models
 from ai_agent.tools import search_knowledge_base
 
 QUERY: typing.Final = "Как выбрать роутер?"
@@ -39,7 +39,7 @@ def create_point(score: float) -> qdrant_client.models.ScoredPoint:
 
 def test_search_knowledge_base_returns_context_and_sources() -> None:
     result: typing.Final = search_knowledge_base.search_knowledge_base(
-        search_knowledge_base.KnowledgeSearchInput(query=QUERY),
+        models.KnowledgeSearchInput(query=QUERY),
         FakeRetrievalClient([create_point(0.9)]),
         context.ContextBuilder(min_score=0.8),
     )
@@ -52,7 +52,7 @@ def test_search_knowledge_base_returns_context_and_sources() -> None:
 
 def test_search_knowledge_base_returns_no_results_below_threshold() -> None:
     result: typing.Final = search_knowledge_base.search_knowledge_base(
-        search_knowledge_base.KnowledgeSearchInput(query=QUERY),
+        models.KnowledgeSearchInput(query=QUERY),
         FakeRetrievalClient([create_point(0.79)]),
         context.ContextBuilder(min_score=0.8),
     )
@@ -64,7 +64,7 @@ def test_search_knowledge_base_returns_no_results_below_threshold() -> None:
 
 def test_search_knowledge_base_returns_safe_retrieval_error() -> None:
     result: typing.Final = search_knowledge_base.search_knowledge_base(
-        search_knowledge_base.KnowledgeSearchInput(query=QUERY),
+        models.KnowledgeSearchInput(query=QUERY),
         FailingRetrievalClient(),
         context.ContextBuilder(min_score=0.8),
     )

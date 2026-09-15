@@ -11,7 +11,7 @@ UNSUPPORTED_MESSAGE: typing.Final = "Я могу помочь только с в
 
 
 class AgentPlan(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     actions: list[contracts.AgentAction] = pydantic.Field(min_length=1, max_length=2)
     knowledge_query: str | None = pydantic.Field(default=None, min_length=1)
@@ -58,7 +58,7 @@ class AgentPlan(pydantic.BaseModel):
 
 
 class FinalAnswerDraft(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     answer: str = pydantic.Field(min_length=1)
     product_codes: list[str] = pydantic.Field(default_factory=list)

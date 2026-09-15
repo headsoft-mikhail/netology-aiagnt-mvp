@@ -8,15 +8,14 @@ import pytest
 import qdrant_client.models
 
 from ai_agent import agent, contracts
-from ai_agent.catalog import config as catalog_config
 from ai_agent.catalog import repository as catalog_repository
-from ai_agent.catalog import restore
 from ai_agent.llm import client as llm_client
 from ai_agent.llm import models as llm_models
 from ai_agent.llm import service
 from ai_agent.memory import repository as memory_repository
 from ai_agent.rag import context
-from ai_agent.tools import search_knowledge_base, search_products
+from ai_agent.tools import registry, search_knowledge_base, search_products
+from tests import reporting
 
 TEST_USER_ID: typing.Final = "test_user"
 OTHER_USER_ID: typing.Final = "other_user"
@@ -38,19 +37,25 @@ CONTEXT_MIN_SCORE: typing.Final = 0.8
 RETRIEVAL_SCORE: typing.Final = 0.95
 TEST_MODEL_NAME: typing.Final = "scripted-test-model"
 UNAVAILABLE_MODEL_NAME: typing.Final = "unavailable-test-model"
+REQUEST_FAILED_EVENT: typing.Final = "event=request_failed"
+LLM_COMPONENT_FIELD: typing.Final = 'component="llm"'
+INVALID_LLM_ERROR_CODE_FIELD: typing.Final = 'error_code="invalid_llm_response"'
+INVALID_LLM_ERROR_TYPE_FIELD: typing.Final = 'error_type="InvalidLLMResponseError"'
 KNOWLEDGE_CASES: typing.Final = (
-    (
-        "Какой WAN-порт нужен для тарифа 1 Гбит/с?",
+    pytest.param(
+        "TC-RAG-001",
         "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+        marks=pytest.mark.report_case("TC-RAG-001"),
     ),
-    (
-        "Что важно проверить перед покупкой гигабитного роутера?",
+    pytest.param(
+        "TC-RAG-002",
         "Проверьте скорость WAN-порта: она должна быть не ниже скорости тарифа.",
+        marks=pytest.mark.report_case("TC-RAG-002"),
     ),
 )
 CATALOG_CASES: typing.Final = (
-    (
-        "Покажи USB-адаптер Wi-Fi 6 до 7000 рублей",
+    pytest.param(
+        "TC-CATALOG-001",
         {
             "category": "wifi_adapter",
             "connection_type": "usb",
@@ -58,18 +63,20 @@ CATALOG_CASES: typing.Final = (
             "max_price_rub": 7000,
         },
         "ADP-DL-DWA-X1850",
+        marks=pytest.mark.report_case("TC-CATALOG-001"),
     ),
-    (
-        "Нужна точка доступа Wi-Fi 7 с PoE",
+    pytest.param(
+        "TC-CATALOG-002",
         {
             "category": "access_point",
             "min_wifi_generation": 7,
             "poe": True,
         },
         "AP-UB-U7P",
+        marks=pytest.mark.report_case("TC-CATALOG-002"),
     ),
-    (
-        "Покажи управляемый коммутатор с PoE до 18000 рублей",
+    pytest.param(
+        "TC-CATALOG-003",
         {
             "category": "network_switch",
             "managed": True,
@@ -77,32 +84,81 @@ CATALOG_CASES: typing.Final = (
             "max_price_rub": 18000,
         },
         "SWT-TP-SG108PE",
+        marks=pytest.mark.report_case("TC-CATALOG-003"),
     ),
 )
 DIRECT_DIALOGUE_CASES: typing.Final = (
-    ("Подбери устройство", "Уточните категорию и бюджет.", contracts.AgentRunStatus.NEEDS_INPUT),
-    ("Нужно улучшить Wi-Fi", "Уточните площадь и текущую проблему.", contracts.AgentRunStatus.NEEDS_INPUT),
-    ("Подбери страховку", "Я консультирую только по сетевому оборудованию.", contracts.AgentRunStatus.COMPLETED),
-    ("Расскажи прогноз погоды", "Этот вопрос вне тематики магазина.", contracts.AgentRunStatus.COMPLETED),
+    pytest.param(
+        "TC-CLARIFY-001",
+        "Уточните категорию и бюджет.",
+        contracts.AgentRunStatus.NEEDS_INPUT,
+        marks=pytest.mark.report_case("TC-CLARIFY-001"),
+    ),
+    pytest.param(
+        "TC-CLARIFY-002",
+        "Уточните площадь и текущую проблему.",
+        contracts.AgentRunStatus.NEEDS_INPUT,
+        marks=pytest.mark.report_case("TC-CLARIFY-002"),
+    ),
+    pytest.param(
+        "TC-SCOPE-001",
+        "Я консультирую только по сетевому оборудованию.",
+        contracts.AgentRunStatus.COMPLETED,
+        marks=pytest.mark.report_case("TC-SCOPE-001"),
+    ),
+    pytest.param(
+        "TC-SCOPE-002",
+        "Этот вопрос вне тематики магазина.",
+        contracts.AgentRunStatus.COMPLETED,
+        marks=pytest.mark.report_case("TC-SCOPE-002"),
+    ),
 )
 NO_RESULT_CASES: typing.Final = (
-    ("Найди роутер дешевле 100 рублей", "router", "В заданном бюджете роутеров нет."),
-    ("Найди Mesh-систему дешевле 100 рублей", "mesh_system", "В заданном бюджете Mesh-систем нет."),
-    ("Найди точку доступа дешевле 100 рублей", "access_point", "В заданном бюджете точек доступа нет."),
+    pytest.param(
+        "TC-MVP-002",
+        "router",
+        "В заданном бюджете роутеров нет.",
+        marks=pytest.mark.report_case("TC-MVP-002"),
+    ),
+    pytest.param(
+        "TC-NOT-FOUND-002",
+        "mesh_system",
+        "В заданном бюджете Mesh-систем нет.",
+        marks=pytest.mark.report_case("TC-NOT-FOUND-002"),
+    ),
+    pytest.param(
+        "TC-NOT-FOUND-003",
+        "access_point",
+        "В заданном бюджете точек доступа нет.",
+        marks=pytest.mark.report_case("TC-NOT-FOUND-003"),
+    ),
 )
 MEMORY_UPDATE_CASES: typing.Final = (
-    (
+    pytest.param(
+        "TC-MEMORY-001",
         contracts.MemoryKey.PREFERRED_BRANDS,
         "Keenetic",
-        "Запомни, что я предпочитаю Keenetic",
+        marks=pytest.mark.report_case("TC-MEMORY-001"),
     ),
-    (
+    pytest.param(
+        "TC-MEMORY-002",
         contracts.MemoryKey.BUDGET_RUB,
         TEST_BUDGET,
-        "Запомни мой бюджет 10000 рублей",
+        marks=pytest.mark.report_case("TC-MEMORY-002"),
     ),
 )
-INVALID_CATALOG_PRICES: typing.Final = (-100, "недорого")
+INVALID_CATALOG_PRICES: typing.Final = (
+    pytest.param(
+        "TC-VALIDATION-001",
+        -100,
+        marks=pytest.mark.report_case("TC-VALIDATION-001"),
+    ),
+    pytest.param(
+        "TC-VALIDATION-002",
+        "недорого",
+        marks=pytest.mark.report_case("TC-VALIDATION-002"),
+    ),
+)
 
 
 class ScriptedChatClient:
@@ -156,14 +212,10 @@ def repositories(
 ) -> tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository]:
     memory: typing.Final = memory_repository.MemoryRepository(database_path=tmp_path / "memory.db")
     catalog_path: typing.Final = tmp_path / "products.db"
-    snapshot_path: typing.Final = pathlib.Path(restore.__file__).parent / "data" / "products.csv"
-    restore.restore_catalog(
-        catalog_config.CatalogConfig(
-            snapshot_path=snapshot_path,
-            database_path=catalog_path,
-        )
-    )
-    return memory, catalog_repository.ProductsRepository(database_path=catalog_path)
+    snapshot_path: typing.Final = pathlib.Path(catalog_repository.__file__).parent / "data" / "products.csv"
+    catalog: typing.Final = catalog_repository.ProductsRepository(database_path=catalog_path)
+    catalog.restore_from_snapshot(snapshot_path)
+    return memory, catalog
 
 
 def create_agent_runner(
@@ -176,14 +228,27 @@ def create_agent_runner(
         agent.AgentRunner(
             memory=memory,
             llm=service.LLMService(chat_client=chat_client),
-            catalog=catalog,
-            retrieval_client=FakeRetrievalClient(),
-            context_builder=context.ContextBuilder(min_score=CONTEXT_MIN_SCORE),
+            tool_registry=create_tool_registry(catalog),
         ),
         chat_client,
     )
 
 
+def create_tool_registry(
+    catalog: catalog_repository.ProductsRepository,
+) -> registry.ToolRegistry:
+    return registry.ToolRegistry(
+        tools=(
+            search_knowledge_base.KnowledgeBaseSearchTool(
+                retrieval_client=FakeRetrievalClient(),
+                context_builder=context.ContextBuilder(min_score=CONTEXT_MIN_SCORE),
+            ),
+            search_products.ProductSearchTool(catalog=catalog),
+        )
+    )
+
+
+@pytest.mark.report_case("TC-MVP-001", "TC-MEMORY-003")
 def test_agent_uses_memory_rag_and_catalog_for_router_selection(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
     caplog: pytest.LogCaptureFixture,
@@ -229,7 +294,7 @@ def test_agent_uses_memory_rag_and_catalog_for_router_selection(
     with caplog.at_level(logging.INFO, logger="ai_agent.agent"):
         result: typing.Final = runner.run(
             TEST_USER_ID,
-            "Подбери Wi-Fi 6 роутер до 10 000 рублей для тарифа 1 Гбит/с",
+            reporting.request("TC-MVP-001"),
             session_id=TEST_SESSION_ID,
         )
 
@@ -277,15 +342,15 @@ def test_agent_uses_memory_rag_and_catalog_for_router_selection(
 
 
 @pytest.mark.parametrize(
-    ("memory_key", "memory_value", "user_query"),
+    ("case_id", "memory_key", "memory_value"),
     MEMORY_UPDATE_CASES,
 )
 def test_agent_saves_only_explicit_memory_update(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
     caplog: pytest.LogCaptureFixture,
+    case_id: str,
     memory_key: contracts.MemoryKey,
     memory_value: str,
-    user_query: str,
 ) -> None:
     runner, _ = create_agent_runner(
         repositories,
@@ -300,7 +365,7 @@ def test_agent_saves_only_explicit_memory_update(
     with caplog.at_level(logging.INFO, logger="ai_agent.agent"):
         result: typing.Final = runner.run(
             TEST_USER_ID,
-            user_query,
+            reporting.request(case_id),
             session_id=TEST_SESSION_ID,
         )
     memory, _ = repositories
@@ -313,6 +378,7 @@ def test_agent_saves_only_explicit_memory_update(
     assert all(memory_value not in record.message for record in caplog.records)
 
 
+@pytest.mark.report_case("TC-MAIN-002")
 def test_agent_combines_rag_and_catalog_for_mesh_selection(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
 ) -> None:
@@ -341,7 +407,7 @@ def test_agent_combines_rag_and_catalog_for_mesh_selection(
 
     result: typing.Final = runner.run(
         TEST_USER_ID,
-        "Подбери Mesh-систему из двух модулей для площади 400 м² до 20000 рублей",
+        reporting.request("TC-MAIN-002"),
         session_id=TEST_SESSION_ID,
     )
 
@@ -350,6 +416,7 @@ def test_agent_combines_rag_and_catalog_for_mesh_selection(
     assert [call.tool_name for call in result.tool_calls] == ["search_knowledge_base", "search_products"]
 
 
+@pytest.mark.report_case("TC-MEMORY-004")
 def test_agent_deletes_requested_memory_fact_only(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
 ) -> None:
@@ -366,7 +433,7 @@ def test_agent_deletes_requested_memory_fact_only(
 
     result: typing.Final = runner.run(
         TEST_USER_ID,
-        "Удали сохранённый бюджет",
+        reporting.request("TC-MEMORY-004"),
         session_id=TEST_SESSION_ID,
     )
 
@@ -376,6 +443,7 @@ def test_agent_deletes_requested_memory_fact_only(
     ]
 
 
+@pytest.mark.report_case("TC-MEMORY-005", "TC-USER-001")
 def test_agent_clears_all_memory_only_for_requesting_user(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
 ) -> None:
@@ -386,7 +454,7 @@ def test_agent_clears_all_memory_only_for_requesting_user(
 
     result: typing.Final = runner.run(
         TEST_USER_ID,
-        "Удали все мои сохранённые предпочтения",
+        reporting.request("TC-MEMORY-005"),
         session_id=TEST_SESSION_ID,
     )
 
@@ -396,12 +464,12 @@ def test_agent_clears_all_memory_only_for_requesting_user(
 
 
 @pytest.mark.parametrize(
-    ("user_query", "category", "answer"),
+    ("case_id", "category", "answer"),
     NO_RESULT_CASES,
 )
 def test_agent_returns_not_found_without_inventing_product(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
-    user_query: str,
+    case_id: str,
     category: str,
     answer: str,
 ) -> None:
@@ -419,7 +487,7 @@ def test_agent_returns_not_found_without_inventing_product(
 
     result: typing.Final = runner.run(
         TEST_USER_ID,
-        user_query,
+        reporting.request(case_id),
         session_id=TEST_SESSION_ID,
     )
 
@@ -428,6 +496,7 @@ def test_agent_returns_not_found_without_inventing_product(
     assert result.tool_calls[0].status is contracts.ToolStatus.NO_RESULTS
 
 
+@pytest.mark.report_case("TC-GROUNDING-001")
 def test_agent_rejects_product_not_returned_by_catalog(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
 ) -> None:
@@ -442,7 +511,7 @@ def test_agent_rejects_product_not_returned_by_catalog(
 
     result: typing.Final = runner.run(
         TEST_USER_ID,
-        "Найди роутер до 7000 рублей",
+        reporting.request("TC-GROUNDING-001"),
         session_id=TEST_SESSION_ID,
     )
 
@@ -450,6 +519,7 @@ def test_agent_rejects_product_not_returned_by_catalog(
     assert result.errors[0].code is contracts.ErrorCode.INVALID_LLM_RESPONSE
 
 
+@pytest.mark.report_case("TC-SESSION-001")
 def test_agent_uses_short_term_history_and_clears_it_at_session_end(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
 ) -> None:
@@ -461,10 +531,10 @@ def test_agent_uses_short_term_history_and_clears_it_at_session_end(
             {"actions": ["answer"], "response_message": "Начинаем заново."},
         ],
     )
-    first_query: typing.Final = "Подбери роутер"
+    first_query, second_query = reporting.request("TC-SESSION-001").split(" → ")
 
     clarification_result: typing.Final = runner.run(TEST_USER_ID, first_query, session_id=TEST_SESSION_ID)
-    runner.run(TEST_USER_ID, "До 10000 рублей", session_id=TEST_SESSION_ID)
+    runner.run(TEST_USER_ID, second_query, session_id=TEST_SESSION_ID)
 
     assert clarification_result.status is contracts.AgentRunStatus.NEEDS_INPUT
     assert clarification_result.tool_calls == []
@@ -496,9 +566,11 @@ def test_agent_handles_unsupported_plan_without_optional_llm_message(
     assert result.tool_calls == []
 
 
-@pytest.mark.parametrize("invalid_price", INVALID_CATALOG_PRICES)
+@pytest.mark.parametrize(("case_id", "invalid_price"), INVALID_CATALOG_PRICES)
 def test_agent_handles_invalid_catalog_filter_from_llm(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+    caplog: pytest.LogCaptureFixture,
+    case_id: str,
     invalid_price: object,
 ) -> None:
     runner, _ = create_agent_runner(
@@ -514,33 +586,47 @@ def test_agent_handles_invalid_catalog_filter_from_llm(
         ],
     )
 
-    result: typing.Final = runner.run(
-        TEST_USER_ID,
-        "Найди роутер с некорректной ценой",
-        session_id=TEST_SESSION_ID,
-    )
+    with caplog.at_level(logging.INFO, logger="ai_agent.agent"):
+        result: typing.Final = runner.run(
+            TEST_USER_ID,
+            reporting.request(case_id),
+            session_id=TEST_SESSION_ID,
+        )
 
     assert result.status is contracts.AgentRunStatus.FAILED
     assert result.tool_calls == []
     assert result.errors[0].code is contracts.ErrorCode.INVALID_LLM_RESPONSE
+    request_failed_log: typing.Final = next(
+        record.message for record in caplog.records if record.message.startswith(REQUEST_FAILED_EVENT)
+    )
+    assert LLM_COMPONENT_FIELD in request_failed_log
+    assert INVALID_LLM_ERROR_CODE_FIELD in request_failed_log
+    assert INVALID_LLM_ERROR_TYPE_FIELD in request_failed_log
+    assert "reason=" in request_failed_log
 
 
+@pytest.mark.report_case("TC-TOOL-ERROR-001")
 def test_agent_handles_catalog_tool_failure(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
     tmp_path: pathlib.Path,
 ) -> None:
-    runner, _ = create_agent_runner(
-        repositories,
+    memory, _ = repositories
+    chat_client: typing.Final = ScriptedChatClient(
         [
             {"actions": ["search_products"]},
             {"filters": {"category": "router"}},
-        ],
+        ]
     )
-    runner.catalog = catalog_repository.ProductsRepository(database_path=tmp_path / "missing.db")
+    missing_catalog: typing.Final = catalog_repository.ProductsRepository(database_path=tmp_path / "missing.db")
+    runner: typing.Final = agent.AgentRunner(
+        memory=memory,
+        llm=service.LLMService(chat_client=chat_client),
+        tool_registry=create_tool_registry(missing_catalog),
+    )
 
     result: typing.Final = runner.run(
         TEST_USER_ID,
-        "Покажи роутеры в наличии",
+        reporting.request("TC-TOOL-ERROR-001"),
         session_id=TEST_SESSION_ID,
     )
 
@@ -549,6 +635,7 @@ def test_agent_handles_catalog_tool_failure(
     assert result.errors[0].code is contracts.ErrorCode.CATALOG_UNAVAILABLE
 
 
+@pytest.mark.report_case("TC-LLM-ERROR-001")
 def test_agent_handles_unavailable_llm(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
 ) -> None:
@@ -556,14 +643,12 @@ def test_agent_handles_unavailable_llm(
     runner: typing.Final = agent.AgentRunner(
         memory=memory,
         llm=service.LLMService(chat_client=UnavailableChatClient()),
-        catalog=catalog,
-        retrieval_client=FakeRetrievalClient(),
-        context_builder=context.ContextBuilder(min_score=CONTEXT_MIN_SCORE),
+        tool_registry=create_tool_registry(catalog),
     )
 
     result: typing.Final = runner.run(
         TEST_USER_ID,
-        "Подбери роутер",
+        reporting.request("TC-LLM-ERROR-001"),
         session_id=TEST_SESSION_ID,
     )
 
@@ -573,12 +658,12 @@ def test_agent_handles_unavailable_llm(
 
 
 @pytest.mark.parametrize(
-    ("user_query", "answer"),
+    ("case_id", "answer"),
     KNOWLEDGE_CASES,
 )
 def test_agent_answers_knowledge_questions_using_rag(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
-    user_query: str,
+    case_id: str,
     answer: str,
 ) -> None:
     runner, _ = create_agent_runner(
@@ -592,7 +677,11 @@ def test_agent_answers_knowledge_questions_using_rag(
         ],
     )
 
-    result: typing.Final = runner.run(TEST_USER_ID, user_query, session_id=TEST_SESSION_ID)
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        reporting.request(case_id),
+        session_id=TEST_SESSION_ID,
+    )
 
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert result.answer == answer
@@ -601,12 +690,12 @@ def test_agent_answers_knowledge_questions_using_rag(
 
 
 @pytest.mark.parametrize(
-    ("user_query", "filters", "product_code"),
+    ("case_id", "filters", "product_code"),
     CATALOG_CASES,
 )
 def test_agent_searches_catalog_for_different_product_categories(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
-    user_query: str,
+    case_id: str,
     filters: dict[str, object],
     product_code: str,
 ) -> None:
@@ -619,7 +708,11 @@ def test_agent_searches_catalog_for_different_product_categories(
         ],
     )
 
-    result: typing.Final = runner.run(TEST_USER_ID, user_query, session_id=TEST_SESSION_ID)
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        reporting.request(case_id),
+        session_id=TEST_SESSION_ID,
+    )
 
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert result.product_codes == [product_code]
@@ -627,12 +720,12 @@ def test_agent_searches_catalog_for_different_product_categories(
 
 
 @pytest.mark.parametrize(
-    ("user_query", "response_message", "expected_status"),
+    ("case_id", "response_message", "expected_status"),
     DIRECT_DIALOGUE_CASES,
 )
 def test_agent_handles_direct_dialogue_branches(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
-    user_query: str,
+    case_id: str,
     response_message: str,
     expected_status: contracts.AgentRunStatus,
 ) -> None:
@@ -642,13 +735,18 @@ def test_agent_handles_direct_dialogue_branches(
         [{"actions": [action], "response_message": response_message}],
     )
 
-    result: typing.Final = runner.run(TEST_USER_ID, user_query, session_id=TEST_SESSION_ID)
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        reporting.request(case_id),
+        session_id=TEST_SESSION_ID,
+    )
 
     assert result.status is expected_status
     assert result.answer == response_message
     assert result.tool_calls == []
 
 
+@pytest.mark.report_case("TC-SESSION-002")
 def test_agent_rejects_session_owned_by_another_user(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
     faker: faker_lib.Faker,
@@ -661,7 +759,7 @@ def test_agent_rejects_session_owned_by_another_user(
 
     result: typing.Final = runner.run(
         faker.uuid4(),
-        "Продолжить чужую консультацию",
+        reporting.request("TC-SESSION-002"),
         session_id=TEST_SESSION_ID,
     )
 

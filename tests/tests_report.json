@@ -1,6 +1,9 @@
 {
   "agent_name": "Network Equipment Store Consultant",
-  "required_test_ids": ["TC-MVP-001", "TC-MVP-002"],
+  "required_test_ids": [
+    "TC-MVP-001",
+    "TC-MVP-002"
+  ],
   "tests": [
     {
       "id": "TC-MVP-001",
@@ -11,7 +14,10 @@
       "request": "Подбери Wi-Fi 6 роутер до 10 000 рублей для тарифа 1 Гбит/с",
       "expected": "Память, RAG и каталог участвуют в подборе; ответ содержит только артикул из каталога",
       "actual": "Учтены бюджет и исключённый бренд, найден RTR-TP-AX23, вызваны оба поисковых Tool",
-      "tool_calls": ["search_knowledge_base", "search_products"],
+      "tool_calls": [
+        "search_knowledge_base",
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -22,7 +28,10 @@
       "request": "Подбери Mesh-систему из двух модулей для площади 400 м² до 20000 рублей",
       "expected": "Агент получает правила выбора через RAG и проверяет подходящую модель в каталоге",
       "actual": "Вызваны оба Tool, предложен найденный артикул MSH-KN-BUDDY-2",
-      "tool_calls": ["search_knowledge_base", "search_products"],
+      "tool_calls": [
+        "search_knowledge_base",
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -33,7 +42,9 @@
       "request": "Какой WAN-порт нужен для тарифа 1 Гбит/с?",
       "expected": "Ответ строится по базе знаний без обращения к каталогу",
       "actual": "Получен источник router_selection.txt и вызван только search_knowledge_base",
-      "tool_calls": ["search_knowledge_base"],
+      "tool_calls": [
+        "search_knowledge_base"
+      ],
       "passed": true
     },
     {
@@ -44,7 +55,9 @@
       "request": "Что важно проверить перед покупкой гигабитного роутера?",
       "expected": "Ответ опирается на найденное правило о скорости WAN-порта",
       "actual": "RAG-контекст найден, каталог не вызывался",
-      "tool_calls": ["search_knowledge_base"],
+      "tool_calls": [
+        "search_knowledge_base"
+      ],
       "passed": true
     },
     {
@@ -55,7 +68,9 @@
       "request": "Покажи USB-адаптер Wi-Fi 6 до 7000 рублей",
       "expected": "Каталог фильтруется по категории, интерфейсу, поколению Wi-Fi и цене",
       "actual": "Предложен только найденный артикул ADP-DL-DWA-X1850",
-      "tool_calls": ["search_products"],
+      "tool_calls": [
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -66,7 +81,9 @@
       "request": "Нужна точка доступа Wi-Fi 7 с PoE",
       "expected": "Каталог применяет специфичные для точки доступа фильтры",
       "actual": "Предложен каталоговый артикул AP-UB-U7P",
-      "tool_calls": ["search_products"],
+      "tool_calls": [
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -77,7 +94,9 @@
       "request": "Покажи управляемый коммутатор с PoE до 18000 рублей",
       "expected": "Каталог применяет фильтры managed, PoE и максимальной цены",
       "actual": "Предложен найденный артикул SWT-TP-SG108PE",
-      "tool_calls": ["search_products"],
+      "tool_calls": [
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -133,7 +152,9 @@
       "request": "Найди роутер дешевле 100 рублей",
       "expected": "Агент не выдумывает товар при пустом результате",
       "actual": "Каталог вернул no_results, список артикулов пуст",
-      "tool_calls": ["search_products"],
+      "tool_calls": [
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -144,7 +165,9 @@
       "request": "Найди Mesh-систему дешевле 100 рублей",
       "expected": "Агент корректно сообщает об отсутствии Mesh-систем",
       "actual": "Получен status=not_found без выдуманного артикула",
-      "tool_calls": ["search_products"],
+      "tool_calls": [
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -155,7 +178,9 @@
       "request": "Найди точку доступа дешевле 100 рублей",
       "expected": "Агент корректно сообщает об отсутствии точек доступа",
       "actual": "Получен status=not_found и пустой список артикулов",
-      "tool_calls": ["search_products"],
+      "tool_calls": [
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -188,7 +213,9 @@
       "request": "Найди роутер до 7000 рублей",
       "expected": "Артикул итогового ответа должен присутствовать в результате каталога",
       "actual": "Выдуманный артикул отклонён с invalid_llm_response",
-      "tool_calls": ["search_products"],
+      "tool_calls": [
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -199,7 +226,9 @@
       "request": "Покажи роутеры в наличии",
       "expected": "Недоступность каталога возвращается как контролируемая ошибка Tool",
       "actual": "Получен catalog_unavailable и status=failed",
-      "tool_calls": ["search_products"],
+      "tool_calls": [
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -240,10 +269,13 @@
       "type": "memory",
       "user_id": "customer-memory-1",
       "session_id": "memory-use",
-      "request": "Подбери роутер для гигабитного тарифа",
+      "request": "Подбери Wi-Fi 6 роутер до 10 000 рублей для тарифа 1 Гбит/с",
       "expected": "Сохранённые бюджет и исключённый бренд поступают в планирование и фильтры",
       "actual": "Оба факта загружены по user_id и применены в запросе каталога",
-      "tool_calls": ["search_knowledge_base", "search_products"],
+      "tool_calls": [
+        "search_knowledge_base",
+        "search_products"
+      ],
       "passed": true
     },
     {
@@ -284,7 +316,7 @@
       "type": "identity",
       "user_id": "customer-a",
       "session_id": "user-isolation-a",
-      "request": "Очисти мои предпочтения",
+      "request": "Удали все мои сохранённые предпочтения",
       "expected": "Операции памяти одного user_id не затрагивают другого",
       "actual": "Данные customer-a удалены, предпочтение customer-b сохранено",
       "tool_calls": [],

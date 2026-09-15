@@ -4,7 +4,7 @@ import typing
 import pytest
 
 from ai_agent import contracts
-from ai_agent.catalog import config, models, repository, restore
+from ai_agent.catalog import models, repository
 from ai_agent.tools import search_products
 
 EXPECTED_ROUTER_PRODUCT_CODES: typing.Final = {
@@ -22,14 +22,10 @@ EXCLUDED_BRAND: typing.Final = "D-Link"
 @pytest.fixture
 def product_catalog(tmp_path: pathlib.Path) -> repository.ProductsRepository:
     db_path: typing.Final = tmp_path / "products.db"
-    csv_path: typing.Final = pathlib.Path(restore.__file__).parent / "data" / "products.csv"
-    restore.restore_catalog(
-        config.CatalogConfig(
-            snapshot_path=csv_path,
-            database_path=db_path,
-        )
-    )
-    return repository.ProductsRepository(database_path=db_path)
+    csv_path: typing.Final = pathlib.Path(repository.__file__).parent / "data" / "products.csv"
+    catalog: typing.Final = repository.ProductsRepository(database_path=db_path)
+    catalog.restore_from_snapshot(csv_path)
+    return catalog
 
 
 def test_search_products_filters_routers_by_characteristics(

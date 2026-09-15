@@ -3,7 +3,7 @@ import typing
 import pytest
 
 from ai_agent import contracts
-from ai_agent.rag import config, context, retrieval
+from ai_agent.rag import config, context, models, retrieval
 from ai_agent.tools import search_knowledge_base
 
 RELEVANT_QUERY: typing.Final = "Какой роутер подойдёт для тарифа 1 Гбит/с?"
@@ -25,7 +25,7 @@ def test_retrieval_finds_router_requirements(
     retrieval_client, context_builder = knowledge_search_dependencies
 
     result: typing.Final = search_knowledge_base.search_knowledge_base(
-        search_knowledge_base.KnowledgeSearchInput(query=RELEVANT_QUERY),
+        models.KnowledgeSearchInput(query=RELEVANT_QUERY),
         retrieval_client,
         context_builder,
     )
@@ -41,7 +41,7 @@ def test_retrieval_rejects_irrelevant_insurance_query(
     retrieval_client, context_builder = knowledge_search_dependencies
 
     result: typing.Final = search_knowledge_base.search_knowledge_base(
-        search_knowledge_base.KnowledgeSearchInput(query=IRRELEVANT_QUERY),
+        models.KnowledgeSearchInput(query=IRRELEVANT_QUERY),
         retrieval_client,
         context_builder,
     )

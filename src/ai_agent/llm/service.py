@@ -46,7 +46,7 @@ class LLMService:
         self,
         query: str,
         memory_facts: list[contracts.MemoryFact],
-        knowledge_result: contracts.KnowledgeSearchResult | None,
+        knowledge_result: contracts.KnowledgeBaseSearchResult | None,
         catalog_result: catalog_models.ProductSearchResult | None,
     ) -> models.FinalAnswerDraft:
         return self._complete_model(

@@ -20,7 +20,7 @@ class ConnectionType(enum.StrEnum):
 
 
 class Product(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     product_code: str = pydantic.Field(min_length=1)
     name: str = pydantic.Field(min_length=1)
@@ -43,8 +43,6 @@ class Product(pydantic.BaseModel):
 
 
 class BaseProductFilters(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid")
-
     max_price_rub: int | None = pydantic.Field(default=None, gt=0)
     brands: list[str] = pydantic.Field(default_factory=list)
     excluded_brands: list[str] = pydantic.Field(default_factory=list)
@@ -97,15 +95,11 @@ type ProductFilters = typing.Annotated[
 
 
 class ProductSearchInput(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid")
-
     filters: ProductFilters
     limit: int = pydantic.Field(default=10, ge=1, le=50)
 
 
 class ProductSearchResult(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid")
-
     status: contracts.ToolStatus
     products: list[Product] = pydantic.Field(default_factory=list)
     total: int = pydantic.Field(default=0, ge=0)

@@ -6,13 +6,13 @@ import pytest
 
 from ai_agent import contracts
 from ai_agent.memory import repository
+from tests import reporting
 
 INITIAL_BUDGET: typing.Final = "10000"
 UPDATED_BUDGET: typing.Final = "15000"
 FIRST_PREFERRED_BRAND: typing.Final = "Keenetic"
 SECOND_PREFERRED_BRAND: typing.Final = "ASUS"
 MEMORY_SOURCE: typing.Final = "explicit_user_request"
-SENSITIVE_VALUE: typing.Final = "Пароль Wi-Fi: super-secret"
 
 
 def test_new_explicit_budget_replaces_previous_value_for_same_user(
@@ -63,15 +63,18 @@ def test_clearing_one_user_does_not_remove_another_users_preferences(
     assert [fact.value for fact in memory.get_relevant(second_user_id, limit=10)] == [SECOND_PREFERRED_BRAND]
 
 
+@pytest.mark.report_case("TC-MEMORY-006")
 def test_memory_rejects_sensitive_value(tmp_path: pathlib.Path, faker: faker_lib.Faker) -> None:
     user_id: typing.Final = faker.uuid4()
     memory: typing.Final = repository.MemoryRepository(database_path=tmp_path / "memory.db")
+
+    sensitive_value: typing.Final = reporting.request("TC-MEMORY-006").removeprefix("Запомни ")
 
     with pytest.raises(ValueError, match="Sensitive data"):
         memory.save_fact(
             user_id,
             contracts.MemoryKey.CURRENT_EQUIPMENT,
-            SENSITIVE_VALUE,
+            sensitive_value,
             source=MEMORY_SOURCE,
         )
 

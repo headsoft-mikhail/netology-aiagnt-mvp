@@ -56,7 +56,7 @@ class MemoryKey(enum.StrEnum):
 
 
 class AgentRequest(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     user_id: str = pydantic.Field(min_length=1)
     query: str = pydantic.Field(min_length=1)
@@ -64,14 +64,12 @@ class AgentRequest(pydantic.BaseModel):
 
 
 class ToolError(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid")
-
     code: ErrorCode
     message: str = pydantic.Field(min_length=1)
 
 
 class MemoryFact(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     id: int = pydantic.Field(gt=0)
     user_id: str = pydantic.Field(min_length=1)
@@ -86,14 +84,14 @@ class MemoryFact(pydantic.BaseModel):
 
 
 class MemoryUpdate(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     key: MemoryKey
     value: str = pydantic.Field(min_length=1)
 
 
 class KnowledgeFragment(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     chunk_id: str = pydantic.Field(min_length=1)
     text: str = pydantic.Field(min_length=1)
@@ -101,9 +99,7 @@ class KnowledgeFragment(pydantic.BaseModel):
     score: float = pydantic.Field(ge=0, le=1)
 
 
-class KnowledgeSearchResult(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid")
-
+class KnowledgeBaseSearchResult(pydantic.BaseModel):
     status: ToolStatus
     fragments: list[KnowledgeFragment] = pydantic.Field(default_factory=list)
     context: str = ""
@@ -112,7 +108,7 @@ class KnowledgeSearchResult(pydantic.BaseModel):
 
 
 class ToolCallTrace(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     tool_name: str = pydantic.Field(min_length=1)
     status: ToolStatus
@@ -122,7 +118,7 @@ class ToolCallTrace(pydantic.BaseModel):
 
 
 class AgentResponse(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     status: AgentRunStatus
     answer: str = pydantic.Field(min_length=1)
