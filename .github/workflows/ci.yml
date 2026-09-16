@@ -1,14 +1,14 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
-      - mvp-fixes
   pull_request:
     branches:
       - main
-  workflow_dispatch:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
 
 permissions:
   contents: read
@@ -19,6 +19,7 @@ env:
 jobs:
   quality:
     name: Quality
+    if: ${{ github.event.action != 'closed' || github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
