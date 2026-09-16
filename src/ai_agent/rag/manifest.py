@@ -11,8 +11,8 @@ import typing
 import uuid
 from pathlib import Path
 
-from ai_agent.rag import models
-from ai_agent.rag.config import PipelineConfig
+from ai_agent.rag.pipelines import models
+from ai_agent.rag.pipelines.config import PipelineConfig
 
 if typing.TYPE_CHECKING:
     from ai_agent.rag.pipelines.chunk.stages.validator import ChunkingValidationMetrics

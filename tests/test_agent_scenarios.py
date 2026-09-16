@@ -1,6 +1,8 @@
+import dataclasses
 import json
 import logging
 import pathlib
+import sqlite3
 import typing
 
 import faker as faker_lib
@@ -13,7 +15,7 @@ from ai_agent.llm import client as llm_client
 from ai_agent.llm import models as llm_models
 from ai_agent.llm import service
 from ai_agent.memory import repository as memory_repository
-from ai_agent.rag import context
+from ai_agent.rag.retrieval import context
 from ai_agent.tools import registry, search_knowledge_base, search_products
 from tests import reporting
 
@@ -41,6 +43,7 @@ REQUEST_FAILED_EVENT: typing.Final = "event=request_failed"
 LLM_COMPONENT_FIELD: typing.Final = 'component="llm"'
 INVALID_LLM_ERROR_CODE_FIELD: typing.Final = 'error_code="invalid_llm_response"'
 INVALID_LLM_ERROR_TYPE_FIELD: typing.Final = 'error_type="InvalidLLMResponseError"'
+MEMORY_DATABASE_ERROR: typing.Final = "simulated memory database failure"
 KNOWLEDGE_CASES: typing.Final = (
     pytest.param(
         "TC-RAG-001",
@@ -159,6 +162,18 @@ INVALID_CATALOG_PRICES: typing.Final = (
         marks=pytest.mark.report_case("TC-VALIDATION-002"),
     ),
 )
+INVALID_MEMORY_CASES: typing.Final = (
+    pytest.param(
+        "TC-MEMORY-008",
+        "-10000",
+        marks=pytest.mark.report_case("TC-MEMORY-008"),
+    ),
+    pytest.param(
+        "TC-MEMORY-009",
+        "десять тысяч рублей",
+        marks=pytest.mark.report_case("TC-MEMORY-009"),
+    ),
+)
 
 
 class ScriptedChatClient:
@@ -195,6 +210,38 @@ class FakeRetrievalClient:
                 },
             )
         ]
+
+
+class EmptyRetrievalClient:
+    def top_k(self, query: str) -> list[qdrant_client.models.ScoredPoint]:
+        del query
+        return []
+
+
+class FailOnceChatClient:
+    def __init__(self, response: dict[str, object]) -> None:
+        self.response = json.dumps(response, ensure_ascii=False)
+        self.calls: list[tuple[str, str]] = []
+        self.failed = False
+
+    @property
+    def model_name(self) -> str:
+        return TEST_MODEL_NAME
+
+    def complete(self, system_prompt: str, user_prompt: str, *, json_mode: bool) -> str:
+        assert json_mode
+        self.calls.append((system_prompt, user_prompt))
+        if not self.failed:
+            self.failed = True
+            raise llm_client.LLMUnavailableError("Temporary LLM failure in test")
+        return self.response
+
+
+@dataclasses.dataclass(kw_only=True, slots=True)
+class UnavailableMemoryRepository(memory_repository.MemoryRepository):
+    def get_relevant(self, user_id: str, *, limit: int) -> list[contracts.MemoryFact]:
+        del user_id, limit
+        raise sqlite3.OperationalError(MEMORY_DATABASE_ERROR)
 
 
 class UnavailableChatClient:
@@ -236,11 +283,12 @@ def create_agent_runner(
 
 def create_tool_registry(
     catalog: catalog_repository.ProductsRepository,
+    retrieval_client: search_knowledge_base.RetrievalClientProtocol | None = None,
 ) -> registry.ToolRegistry:
     return registry.ToolRegistry(
         tools=(
             search_knowledge_base.KnowledgeBaseSearchTool(
-                retrieval_client=FakeRetrievalClient(),
+                retrieval_client=retrieval_client or FakeRetrievalClient(),
                 context_builder=context.ContextBuilder(min_score=CONTEXT_MIN_SCORE),
             ),
             search_products.ProductSearchTool(catalog=catalog),
@@ -297,6 +345,8 @@ def test_agent_uses_memory_rag_and_catalog_for_router_selection(
             reporting.request("TC-MVP-001"),
             session_id=TEST_SESSION_ID,
         )
+    reporting.record_agent_response("TC-MVP-001", result)
+    reporting.record_agent_response("TC-MEMORY-003", result)
 
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert [call.tool_name for call in result.tool_calls] == ["search_knowledge_base", "search_products"]
@@ -370,12 +420,108 @@ def test_agent_saves_only_explicit_memory_update(
         )
     memory, _ = repositories
     saved_facts: typing.Final = memory.get_relevant(TEST_USER_ID, limit=MEMORY_LIMIT)
+    reporting.record_agent_response(
+        case_id,
+        result,
+        memory_operation="save",
+        memory_keys=[memory_key],
+    )
 
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert result.tool_calls == []
     assert [(fact.key, fact.value) for fact in saved_facts] == [(memory_key, memory_value)]
     assert any("event=memory_update_completed" in record.message for record in caplog.records)
     assert all(memory_value not in record.message for record in caplog.records)
+
+
+@pytest.mark.report_case("TC-MEMORY-007")
+def test_agent_uses_fact_saved_through_previous_dialogue_turn(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+) -> None:
+    first_query, second_query = reporting.request("TC-MEMORY-007").split(" → ")
+    runner, chat_client = create_agent_runner(
+        repositories,
+        [
+            {
+                "actions": ["update_memory"],
+                "memory_update": {
+                    "key": contracts.MemoryKey.BUDGET_RUB.value,
+                    "value": TEST_BUDGET,
+                },
+            },
+            {"actions": ["search_products"]},
+            {
+                "filters": {
+                    "category": "router",
+                    "max_price_rub": int(TEST_BUDGET),
+                    "min_wifi_generation": 6,
+                },
+                "limit": CATALOG_RESULT_LIMIT,
+            },
+            {
+                "answer": f"С учётом бюджета подходит {ROUTER_PRODUCT_CODE}.",
+                "product_codes": [ROUTER_PRODUCT_CODE],
+            },
+        ],
+    )
+
+    save_result: typing.Final = runner.run(TEST_USER_ID, first_query, session_id=TEST_SESSION_ID)
+    result: typing.Final = runner.run(TEST_USER_ID, second_query, session_id=TEST_SESSION_ID)
+    reporting.record_agent_response(
+        "TC-MEMORY-007",
+        result,
+        memory_operation="read",
+        memory_keys=[contracts.MemoryKey.BUDGET_RUB],
+    )
+
+    assert save_result.status is contracts.AgentRunStatus.COMPLETED
+    assert result.status is contracts.AgentRunStatus.COMPLETED
+    assert result.memory_used
+    assert TEST_BUDGET in chat_client.calls[1][1]
+    assert TEST_BUDGET in chat_client.calls[2][1]
+    catalog_tool_input: typing.Final = json.loads(result.tool_calls[0].input_json)
+    assert catalog_tool_input["filters"]["max_price_rub"] == int(TEST_BUDGET)
+    assert ROUTER_PRODUCT_CODE in result.answer
+    memory, _ = repositories
+    assert memory.get_relevant(OTHER_USER_ID, limit=MEMORY_LIMIT) == []
+
+
+@pytest.mark.parametrize(("case_id", "invalid_value"), INVALID_MEMORY_CASES)
+def test_agent_rejects_invalid_numeric_memory_value(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+    case_id: str,
+    invalid_value: str,
+) -> None:
+    runner, _ = create_agent_runner(
+        repositories,
+        [
+            {
+                "actions": ["update_memory"],
+                "memory_update": {
+                    "key": contracts.MemoryKey.BUDGET_RUB.value,
+                    "value": invalid_value,
+                },
+            }
+        ],
+    )
+
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        reporting.request(case_id),
+        session_id=TEST_SESSION_ID,
+    )
+    reporting.record_agent_response(
+        case_id,
+        result,
+        memory_operation="save_rejected",
+        memory_keys=[contracts.MemoryKey.BUDGET_RUB],
+    )
+
+    assert result.status is contracts.AgentRunStatus.NEEDS_INPUT
+    assert not result.errors
+    assert "положительное целое число" in result.answer
+    memory, _ = repositories
+    assert memory.get_relevant(TEST_USER_ID, limit=MEMORY_LIMIT) == []
 
 
 @pytest.mark.report_case("TC-MAIN-002")
@@ -410,10 +556,83 @@ def test_agent_combines_rag_and_catalog_for_mesh_selection(
         reporting.request("TC-MAIN-002"),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response("TC-MAIN-002", result)
 
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert result.product_codes == [MESH_PRODUCT_CODE]
     assert [call.tool_name for call in result.tool_calls] == ["search_knowledge_base", "search_products"]
+
+
+@pytest.mark.report_case("TC-STATUS-001")
+def test_agent_completes_combined_search_when_catalog_has_product_without_rag_context(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+) -> None:
+    memory, catalog = repositories
+    chat_client: typing.Final = ScriptedChatClient(
+        [
+            {
+                "actions": ["search_knowledge_base", "search_products"],
+                "knowledge_query": "несуществующая инструкция",
+            },
+            {
+                "filters": {"category": "router", "max_price_rub": 7000},
+                "limit": CATALOG_RESULT_LIMIT,
+            },
+            {
+                "answer": f"В каталоге найден {ROUTER_PRODUCT_CODE}.",
+                "product_codes": [ROUTER_PRODUCT_CODE],
+            },
+        ]
+    )
+    runner: typing.Final = agent.AgentRunner(
+        memory=memory,
+        llm=service.LLMService(chat_client=chat_client),
+        tool_registry=create_tool_registry(catalog, EmptyRetrievalClient()),
+    )
+
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        reporting.request("TC-STATUS-001"),
+        session_id=TEST_SESSION_ID,
+    )
+    reporting.record_agent_response("TC-STATUS-001", result)
+
+    assert result.status is contracts.AgentRunStatus.COMPLETED
+    assert result.tool_calls[0].status is contracts.ToolStatus.NO_RESULTS
+    assert result.tool_calls[1].status is contracts.ToolStatus.OK
+    assert result.product_codes == [ROUTER_PRODUCT_CODE]
+
+
+@pytest.mark.report_case("TC-STATUS-002")
+def test_agent_returns_not_found_when_combined_search_catalog_is_empty(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+) -> None:
+    runner, _ = create_agent_runner(
+        repositories,
+        [
+            {
+                "actions": ["search_knowledge_base", "search_products"],
+                "knowledge_query": KNOWLEDGE_QUERY,
+            },
+            {
+                "filters": {"category": "router", "max_price_rub": NO_RESULT_MAX_PRICE},
+                "limit": CATALOG_RESULT_LIMIT,
+            },
+            {"answer": "Подходящих товаров нет.", "product_codes": []},
+        ],
+    )
+
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        reporting.request("TC-STATUS-002"),
+        session_id=TEST_SESSION_ID,
+    )
+    reporting.record_agent_response("TC-STATUS-002", result)
+
+    assert result.status is contracts.AgentRunStatus.NOT_FOUND
+    assert result.tool_calls[0].status is contracts.ToolStatus.OK
+    assert result.tool_calls[1].status is contracts.ToolStatus.NO_RESULTS
+    assert result.product_codes == []
 
 
 @pytest.mark.report_case("TC-MEMORY-004")
@@ -436,6 +655,12 @@ def test_agent_deletes_requested_memory_fact_only(
         reporting.request("TC-MEMORY-004"),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response(
+        "TC-MEMORY-004",
+        result,
+        memory_operation="delete",
+        memory_keys=[contracts.MemoryKey.BUDGET_RUB],
+    )
 
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert [(fact.key, fact.value) for fact in memory.get_relevant(TEST_USER_ID, limit=MEMORY_LIMIT)] == [
@@ -457,6 +682,12 @@ def test_agent_clears_all_memory_only_for_requesting_user(
         reporting.request("TC-MEMORY-005"),
         session_id=TEST_SESSION_ID,
     )
+    for case_id in ("TC-MEMORY-005", "TC-USER-001"):
+        reporting.record_agent_response(
+            case_id,
+            result,
+            memory_operation="clear",
+        )
 
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert memory.get_relevant(TEST_USER_ID, limit=MEMORY_LIMIT) == []
@@ -490,6 +721,7 @@ def test_agent_returns_not_found_without_inventing_product(
         reporting.request(case_id),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response(case_id, result)
 
     assert result.status is contracts.AgentRunStatus.NOT_FOUND
     assert result.product_codes == []
@@ -514,6 +746,7 @@ def test_agent_rejects_product_not_returned_by_catalog(
         reporting.request("TC-GROUNDING-001"),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response("TC-GROUNDING-001", result)
 
     assert result.status is contracts.AgentRunStatus.FAILED
     assert result.errors[0].code is contracts.ErrorCode.INVALID_LLM_RESPONSE
@@ -534,7 +767,16 @@ def test_agent_uses_short_term_history_and_clears_it_at_session_end(
     first_query, second_query = reporting.request("TC-SESSION-001").split(" → ")
 
     clarification_result: typing.Final = runner.run(TEST_USER_ID, first_query, session_id=TEST_SESSION_ID)
-    runner.run(TEST_USER_ID, second_query, session_id=TEST_SESSION_ID)
+    continuation_result: typing.Final = runner.run(TEST_USER_ID, second_query, session_id=TEST_SESSION_ID)
+    reporting.record_custom_result(
+        "TC-SESSION-001",
+        {
+            "status": continuation_result.status.value,
+            "first_answer": clarification_result.answer,
+            "second_answer": continuation_result.answer,
+            "history_used": first_query in chat_client.calls[1][1],
+        },
+    )
 
     assert clarification_result.status is contracts.AgentRunStatus.NEEDS_INPUT
     assert clarification_result.tool_calls == []
@@ -545,6 +787,39 @@ def test_agent_uses_short_term_history_and_clears_it_at_session_end(
     runner.run(TEST_USER_ID, "Новый вопрос", session_id=TEST_SESSION_ID)
 
     assert first_query not in chat_client.calls[2][1]
+
+
+@pytest.mark.report_case("TC-SESSION-003")
+def test_agent_records_controlled_error_as_paired_session_response(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+) -> None:
+    first_query, second_query = reporting.request("TC-SESSION-003").split(" → ")
+    memory, catalog = repositories
+    chat_client: typing.Final = FailOnceChatClient({"actions": ["answer"], "response_message": "Диалог продолжен."})
+    runner: typing.Final = agent.AgentRunner(
+        memory=memory,
+        llm=service.LLMService(chat_client=chat_client),
+        tool_registry=create_tool_registry(catalog),
+    )
+
+    failed_result: typing.Final = runner.run(TEST_USER_ID, first_query, session_id=TEST_SESSION_ID)
+    result: typing.Final = runner.run(TEST_USER_ID, second_query, session_id=TEST_SESSION_ID)
+    paired_history: typing.Final = (
+        first_query in chat_client.calls[1][1] and failed_result.answer in chat_client.calls[1][1]
+    )
+    reporting.record_custom_result(
+        "TC-SESSION-003",
+        {
+            "status": result.status.value,
+            "previous_status": failed_result.status.value,
+            "paired_history": paired_history,
+            "answer": result.answer,
+        },
+    )
+
+    assert failed_result.status is contracts.AgentRunStatus.FAILED
+    assert result.status is contracts.AgentRunStatus.COMPLETED
+    assert paired_history
 
 
 def test_agent_handles_unsupported_plan_without_optional_llm_message(
@@ -592,6 +867,7 @@ def test_agent_handles_invalid_catalog_filter_from_llm(
             reporting.request(case_id),
             session_id=TEST_SESSION_ID,
         )
+    reporting.record_agent_response(case_id, result)
 
     assert result.status is contracts.AgentRunStatus.FAILED
     assert result.tool_calls == []
@@ -629,6 +905,7 @@ def test_agent_handles_catalog_tool_failure(
         reporting.request("TC-TOOL-ERROR-001"),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response("TC-TOOL-ERROR-001", result)
 
     assert result.status is contracts.AgentRunStatus.FAILED
     assert result.tool_calls[0].status is contracts.ToolStatus.ERROR
@@ -651,10 +928,46 @@ def test_agent_handles_unavailable_llm(
         reporting.request("TC-LLM-ERROR-001"),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response("TC-LLM-ERROR-001", result)
 
     assert result.status is contracts.AgentRunStatus.FAILED
     assert result.tool_calls == []
     assert result.errors[0].code is contracts.ErrorCode.LLM_UNAVAILABLE
+
+
+@pytest.mark.report_case("TC-MEMORY-ERROR-002")
+def test_agent_logs_memory_database_failure_with_traceback(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+    tmp_path: pathlib.Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    _, catalog = repositories
+    failing_memory: typing.Final = UnavailableMemoryRepository(database_path=tmp_path / "broken-memory.db")
+    runner: typing.Final = agent.AgentRunner(
+        memory=failing_memory,
+        llm=service.LLMService(chat_client=ScriptedChatClient([])),
+        tool_registry=create_tool_registry(catalog),
+    )
+
+    with caplog.at_level(logging.DEBUG, logger="ai_agent.agent"):
+        result: typing.Final = runner.run(
+            TEST_USER_ID,
+            reporting.request("TC-MEMORY-ERROR-002"),
+            session_id=TEST_SESSION_ID,
+        )
+    reporting.record_agent_response("TC-MEMORY-ERROR-002", result)
+
+    assert result.status is contracts.AgentRunStatus.FAILED
+    assert result.errors[0].code is contracts.ErrorCode.MEMORY_UNAVAILABLE
+    request_failed_log: typing.Final = next(
+        record for record in caplog.records if record.message.startswith(REQUEST_FAILED_EVENT)
+    )
+    assert 'component="memory"' in request_failed_log.message
+    assert 'error_type="OperationalError"' in request_failed_log.message
+    assert MEMORY_DATABASE_ERROR in request_failed_log.message
+    assert request_failed_log.exc_info is None
+    debug_log: typing.Final = next(record for record in caplog.records if record.message == "memory operation failed")
+    assert debug_log.exc_info is not None
 
 
 @pytest.mark.parametrize(
@@ -682,6 +995,7 @@ def test_agent_answers_knowledge_questions_using_rag(
         reporting.request(case_id),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response(case_id, result)
 
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert result.answer == answer
@@ -713,6 +1027,7 @@ def test_agent_searches_catalog_for_different_product_categories(
         reporting.request(case_id),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response(case_id, result)
 
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert result.product_codes == [product_code]
@@ -740,6 +1055,7 @@ def test_agent_handles_direct_dialogue_branches(
         reporting.request(case_id),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response(case_id, result)
 
     assert result.status is expected_status
     assert result.answer == response_message
@@ -762,6 +1078,7 @@ def test_agent_rejects_session_owned_by_another_user(
         reporting.request("TC-SESSION-002"),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response("TC-SESSION-002", result)
 
     assert result.status is contracts.AgentRunStatus.FAILED
     assert result.errors[0].code is contracts.ErrorCode.INVALID_INPUT

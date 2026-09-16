@@ -4,7 +4,7 @@ import logging
 import math
 import typing
 
-from ai_agent.rag import models
+from ai_agent.rag.pipelines import models
 from ai_agent.rag.pipelines.embeddings.stages.embedding import EmbeddingModel
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)

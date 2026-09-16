@@ -29,7 +29,7 @@ lint:
     uv run ty check .
 
 test: prepare_agent
-    uv run pytest
+    uv run pytest --cov=ai_agent --cov-report=term-missing --cov-report=json:tests/coverage_report.json
     just clear_runtime
 
 catalog_restore:

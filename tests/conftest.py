@@ -16,6 +16,13 @@ def pytest_configure(config: pytest.Config) -> None:
     )
 
 
+def pytest_sessionstart(session: pytest.Session) -> None:
+    del session
+    NODE_CASES.clear()
+    CASE_RESULTS.clear()
+    reporting.initialize_report()
+
+
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
         case_ids = tuple(
@@ -42,5 +49,7 @@ def pytest_runtest_logreport(report: pytest.TestReport) -> None:
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
-    del session, exitstatus
-    reporting.write_results(CASE_RESULTS)
+    del exitstatus
+    missing_actuals: typing.Final = reporting.write_results(CASE_RESULTS)
+    if missing_actuals:
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED

@@ -3,8 +3,8 @@ import json
 import logging
 import typing
 
-from ai_agent.rag import models
-from ai_agent.rag.config import PathsConfig
+from ai_agent.rag.pipelines import models
+from ai_agent.rag.pipelines.config import PathsConfig
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
 

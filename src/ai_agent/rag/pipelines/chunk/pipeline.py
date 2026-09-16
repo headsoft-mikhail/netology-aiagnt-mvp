@@ -3,11 +3,11 @@ import logging
 import typing
 
 from ai_agent.rag import manifest
-from ai_agent.rag.config import PipelineConfig
 from ai_agent.rag.pipelines.chunk.stages.exporter import ChunkExporter
 from ai_agent.rag.pipelines.chunk.stages.loader import load_documents
 from ai_agent.rag.pipelines.chunk.stages.splitter import ChunkSplitter
 from ai_agent.rag.pipelines.chunk.stages.validator import ChunkValidator
+from ai_agent.rag.pipelines.config import PipelineConfig
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
 

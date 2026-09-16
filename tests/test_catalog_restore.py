@@ -1,10 +1,10 @@
 import pathlib
-import sqlite3
 import sys
 import typing
 
 import pytest
 
+from ai_agent import sqlite_resource
 from ai_agent.catalog import cli, config, repository
 
 EXPECTED_PRODUCT_COUNT: typing.Final = 35
@@ -24,7 +24,7 @@ def test_restore_catalog_replaces_database_from_csv_snapshot(tmp_path: pathlib.P
     catalog: typing.Final = repository.ProductsRepository(database_path=db_path)
     assert catalog.restore_from_snapshot(catalog_config.snapshot_path) == EXPECTED_PRODUCT_COUNT
 
-    with sqlite3.connect(db_path) as connection:
+    with sqlite_resource.connect(db_path) as connection:
         connection.execute(
             "UPDATE products SET price_rub = ? WHERE product_code = ?",
             (CHANGED_PRICE_RUB, TEST_PRODUCT_CODE),
@@ -32,7 +32,7 @@ def test_restore_catalog_replaces_database_from_csv_snapshot(tmp_path: pathlib.P
 
     assert catalog.restore_from_snapshot(catalog_config.snapshot_path) == EXPECTED_PRODUCT_COUNT
 
-    with sqlite3.connect(db_path) as connection:
+    with sqlite_resource.connect(db_path) as connection:
         restored_price: typing.Final = connection.execute(
             "SELECT price_rub FROM products WHERE product_code = ?",
             (TEST_PRODUCT_CODE,),

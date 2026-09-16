@@ -3,7 +3,7 @@ import time
 import typing
 
 from ai_agent import contracts
-from ai_agent.handlers import runtime
+from ai_agent.handlers import helpers, runtime
 from ai_agent.llm import client as llm_client
 from ai_agent.llm import models as llm_models
 from ai_agent.llm.service import LLMService
@@ -38,7 +38,7 @@ class PlanningHandler:
             "llm_request_completed",
             phase="planning",
             model=self.llm.model_name,
-            duration_ms=runtime.duration_ms(started_at),
+            duration_ms=helpers.duration_ms(started_at),
         )
         context.agent_state.selected_actions = plan.actions
         context.log("actions_selected", actions=[action.value for action in plan.actions])

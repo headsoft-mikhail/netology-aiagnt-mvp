@@ -3,8 +3,8 @@ import typing
 
 from sentence_transformers import SentenceTransformer
 
-from ai_agent.rag import models
-from ai_agent.rag.config import EmbeddingConfig
+from ai_agent.rag.pipelines import models
+from ai_agent.rag.pipelines.config import EmbeddingConfig
 
 
 @dataclasses.dataclass(kw_only=True, slots=True, frozen=True)

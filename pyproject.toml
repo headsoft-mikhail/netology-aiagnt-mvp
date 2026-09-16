@@ -18,6 +18,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest",
+    "pytest-cov",
     "faker",
     "ruff",
     "ty",

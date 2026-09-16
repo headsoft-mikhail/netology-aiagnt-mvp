@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - mvp-fixes
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.14.5"
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+
+      - name: Set up just
+        uses: extractions/setup-just@v4
+
+      - name: Install dependencies
+        run: just install
+
+      - name: Run formatters, linters, and type checker
+        run: just lint
+
+      - name: Verify that quality checks made no changes
+        run: git diff --exit-code
+
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: true
+
+      - name: Set up just
+        uses: extractions/setup-just@v4
+
+      - name: Install dependencies
+        run: just install
+
+      - name: Run tests with coverage
+        run: just test
+
+      - name: Upload test and coverage reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: |
+            tests/tests_report.json
+            tests/coverage_report.json
+          if-no-files-found: error

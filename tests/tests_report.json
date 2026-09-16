@@ -13,10 +13,139 @@
       "session_id": "selection-router",
       "request": "Подбери Wi-Fi 6 роутер до 10 000 рублей для тарифа 1 Гбит/с",
       "expected": "Память, RAG и каталог участвуют в подборе; ответ содержит только артикул из каталога",
-      "actual": "Учтены бюджет и исключённый бренд, найден RTR-TP-AX23, вызваны оба поисковых Tool",
+      "actual": {
+        "status": "completed",
+        "answer": "TP-Link Archer AX23 (RTR-TP-AX23) подходит и стоит 6490 рублей.",
+        "sources": [
+          "router_selection.txt"
+        ],
+        "product_codes": [
+          "RTR-TP-AX23"
+        ],
+        "memory": {
+          "used_fact_ids": [
+            2,
+            1
+          ],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_knowledge_base",
-        "search_products"
+        {
+          "name": "search_knowledge_base",
+          "status": "ok",
+          "input": {
+            "query": "требования к роутеру для гигабитного тарифа"
+          },
+          "output": {
+            "status": "ok",
+            "fragments": [
+              {
+                "chunk_id": "router-1",
+                "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+                "source": "router_selection.txt",
+                "score": 0.95
+              }
+            ],
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "sources": [
+              "router_selection.txt"
+            ],
+            "error": null
+          },
+          "error": null
+        },
+        {
+          "name": "search_products",
+          "status": "ok",
+          "input": {
+            "filters": {
+              "max_price_rub": 10000,
+              "brands": [],
+              "excluded_brands": [
+                "D-Link"
+              ],
+              "in_stock": true,
+              "category": "router",
+              "min_wifi_generation": 6,
+              "min_wireless_speed_mbps": null,
+              "min_wan_speed_mbps": 1000,
+              "min_lan_ports": null,
+              "mesh_support": null
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "ok",
+            "products": [
+              {
+                "product_code": "RTR-HW-AX3",
+                "name": "Huawei WiFi AX3",
+                "category": "router",
+                "brand": "Huawei",
+                "price_rub": 5990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 3000,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 3,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-TP-AX23",
+                "name": "TP-Link Archer AX23",
+                "category": "router",
+                "brand": "TP-Link",
+                "price_rub": 6490,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1800,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 4,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-KN-SPR",
+                "name": "Keenetic Sprinter",
+                "category": "router",
+                "brand": "Keenetic",
+                "price_rub": 7990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 3000,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 4,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              }
+            ],
+            "total": 3,
+            "error": null
+          },
+          "error": null
+        }
       ],
       "passed": true
     },
@@ -27,10 +156,133 @@
       "session_id": "selection-mesh",
       "request": "Подбери Mesh-систему из двух модулей для площади 400 м² до 20000 рублей",
       "expected": "Агент получает правила выбора через RAG и проверяет подходящую модель в каталоге",
-      "actual": "Вызваны оба Tool, предложен найденный артикул MSH-KN-BUDDY-2",
+      "actual": {
+        "status": "completed",
+        "answer": "Для большой квартиры подходит Mesh-система MSH-KN-BUDDY-2.",
+        "sources": [
+          "coverage_and_mesh.txt"
+        ],
+        "product_codes": [
+          "MSH-KN-BUDDY-2"
+        ],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_knowledge_base",
-        "search_products"
+        {
+          "name": "search_knowledge_base",
+          "status": "ok",
+          "input": {
+            "query": "выбор Mesh-системы для большой площади"
+          },
+          "output": {
+            "status": "ok",
+            "fragments": [
+              {
+                "chunk_id": "router-1",
+                "text": "Для большой площади используйте Mesh-систему из нескольких модулей.",
+                "source": "coverage_and_mesh.txt",
+                "score": 0.95
+              }
+            ],
+            "context": "[Фрагмент 1]\nИсточник: coverage_and_mesh.txt\nТекст: Для большой площади используйте Mesh-систему из нескольких модулей.",
+            "sources": [
+              "coverage_and_mesh.txt"
+            ],
+            "error": null
+          },
+          "error": null
+        },
+        {
+          "name": "search_products",
+          "status": "ok",
+          "input": {
+            "filters": {
+              "max_price_rub": 20000,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "mesh_system",
+              "min_wifi_generation": null,
+              "min_wan_speed_mbps": null,
+              "min_nodes": 2,
+              "min_coverage_sqm": 400
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "ok",
+            "products": [
+              {
+                "product_code": "MSH-TP-X50-2",
+                "name": "TP-Link Deco X50 2-pack",
+                "category": "mesh_system",
+                "brand": "TP-Link",
+                "price_rub": 16990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 3000,
+                "wan_speed_mbps": 1000,
+                "lan_ports": null,
+                "mesh_support": true,
+                "nodes": 2,
+                "coverage_sqm": 420,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "MSH-KN-BUDDY-2",
+                "name": "Keenetic Buddy 6 2-pack",
+                "category": "mesh_system",
+                "brand": "Keenetic",
+                "price_rub": 18990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 3000,
+                "wan_speed_mbps": 1000,
+                "lan_ports": null,
+                "mesh_support": true,
+                "nodes": 2,
+                "coverage_sqm": 400,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "MSH-DL-M15-3",
+                "name": "D-Link Eagle Pro AI M15 3-pack",
+                "category": "mesh_system",
+                "brand": "D-Link",
+                "price_rub": 19990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1500,
+                "wan_speed_mbps": 1000,
+                "lan_ports": null,
+                "mesh_support": true,
+                "nodes": 3,
+                "coverage_sqm": 500,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              }
+            ],
+            "total": 3,
+            "error": null
+          },
+          "error": null
+        }
       ],
       "passed": true
     },
@@ -41,9 +293,45 @@
       "session_id": "knowledge-1",
       "request": "Какой WAN-порт нужен для тарифа 1 Гбит/с?",
       "expected": "Ответ строится по базе знаний без обращения к каталогу",
-      "actual": "Получен источник router_selection.txt и вызван только search_knowledge_base",
+      "actual": {
+        "status": "completed",
+        "answer": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+        "sources": [
+          "router_selection.txt"
+        ],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_knowledge_base"
+        {
+          "name": "search_knowledge_base",
+          "status": "ok",
+          "input": {
+            "query": "требования к роутеру для гигабитного тарифа"
+          },
+          "output": {
+            "status": "ok",
+            "fragments": [
+              {
+                "chunk_id": "router-1",
+                "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+                "source": "router_selection.txt",
+                "score": 0.95
+              }
+            ],
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "sources": [
+              "router_selection.txt"
+            ],
+            "error": null
+          },
+          "error": null
+        }
       ],
       "passed": true
     },
@@ -54,9 +342,45 @@
       "session_id": "knowledge-2",
       "request": "Что важно проверить перед покупкой гигабитного роутера?",
       "expected": "Ответ опирается на найденное правило о скорости WAN-порта",
-      "actual": "RAG-контекст найден, каталог не вызывался",
+      "actual": {
+        "status": "completed",
+        "answer": "Проверьте скорость WAN-порта: она должна быть не ниже скорости тарифа.",
+        "sources": [
+          "router_selection.txt"
+        ],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_knowledge_base"
+        {
+          "name": "search_knowledge_base",
+          "status": "ok",
+          "input": {
+            "query": "требования к роутеру для гигабитного тарифа"
+          },
+          "output": {
+            "status": "ok",
+            "fragments": [
+              {
+                "chunk_id": "router-1",
+                "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+                "source": "router_selection.txt",
+                "score": 0.95
+              }
+            ],
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "sources": [
+              "router_selection.txt"
+            ],
+            "error": null
+          },
+          "error": null
+        }
       ],
       "passed": true
     },
@@ -67,9 +391,86 @@
       "session_id": "catalog-1",
       "request": "Покажи USB-адаптер Wi-Fi 6 до 7000 рублей",
       "expected": "Каталог фильтруется по категории, интерфейсу, поколению Wi-Fi и цене",
-      "actual": "Предложен только найденный артикул ADP-DL-DWA-X1850",
+      "actual": {
+        "status": "completed",
+        "answer": "Подходящий товар: ADP-DL-DWA-X1850.",
+        "sources": [],
+        "product_codes": [
+          "ADP-DL-DWA-X1850"
+        ],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_products"
+        {
+          "name": "search_products",
+          "status": "ok",
+          "input": {
+            "filters": {
+              "max_price_rub": 7000,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "wifi_adapter",
+              "min_wifi_generation": 6,
+              "min_wireless_speed_mbps": null,
+              "connection_type": "usb"
+            },
+            "limit": 10
+          },
+          "output": {
+            "status": "ok",
+            "products": [
+              {
+                "product_code": "ADP-DL-DWA-X1850",
+                "name": "D-Link DWA-X1850",
+                "category": "wifi_adapter",
+                "brand": "D-Link",
+                "price_rub": 3990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1800,
+                "wan_speed_mbps": null,
+                "lan_ports": null,
+                "mesh_support": null,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": "usb"
+              },
+              {
+                "product_code": "ADP-AS-AX56",
+                "name": "ASUS USB-AX56",
+                "category": "wifi_adapter",
+                "brand": "ASUS",
+                "price_rub": 6490,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1800,
+                "wan_speed_mbps": null,
+                "lan_ports": null,
+                "mesh_support": null,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": "usb"
+              }
+            ],
+            "total": 2,
+            "error": null
+          },
+          "error": null
+        }
       ],
       "passed": true
     },
@@ -80,9 +481,66 @@
       "session_id": "catalog-2",
       "request": "Нужна точка доступа Wi-Fi 7 с PoE",
       "expected": "Каталог применяет специфичные для точки доступа фильтры",
-      "actual": "Предложен каталоговый артикул AP-UB-U7P",
+      "actual": {
+        "status": "completed",
+        "answer": "Подходящий товар: AP-UB-U7P.",
+        "sources": [],
+        "product_codes": [
+          "AP-UB-U7P"
+        ],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_products"
+        {
+          "name": "search_products",
+          "status": "ok",
+          "input": {
+            "filters": {
+              "max_price_rub": null,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "access_point",
+              "min_wifi_generation": 7,
+              "min_wireless_speed_mbps": null,
+              "poe": true
+            },
+            "limit": 10
+          },
+          "output": {
+            "status": "ok",
+            "products": [
+              {
+                "product_code": "AP-UB-U7P",
+                "name": "Ubiquiti UniFi U7 Pro",
+                "category": "access_point",
+                "brand": "Ubiquiti",
+                "price_rub": 23990,
+                "in_stock": true,
+                "wifi_generation": 7,
+                "max_wireless_speed_mbps": 9300,
+                "wan_speed_mbps": null,
+                "lan_ports": null,
+                "mesh_support": null,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": true,
+                "connection_type": null
+              }
+            ],
+            "total": 1,
+            "error": null
+          },
+          "error": null
+        }
       ],
       "passed": true
     },
@@ -93,9 +551,87 @@
       "session_id": "catalog-3",
       "request": "Покажи управляемый коммутатор с PoE до 18000 рублей",
       "expected": "Каталог применяет фильтры managed, PoE и максимальной цены",
-      "actual": "Предложен найденный артикул SWT-TP-SG108PE",
+      "actual": {
+        "status": "completed",
+        "answer": "Подходящий товар: SWT-TP-SG108PE.",
+        "sources": [],
+        "product_codes": [
+          "SWT-TP-SG108PE"
+        ],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_products"
+        {
+          "name": "search_products",
+          "status": "ok",
+          "input": {
+            "filters": {
+              "max_price_rub": 18000,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "network_switch",
+              "min_port_count": null,
+              "min_port_speed_mbps": null,
+              "managed": true,
+              "poe": true
+            },
+            "limit": 10
+          },
+          "output": {
+            "status": "ok",
+            "products": [
+              {
+                "product_code": "SWT-TP-SG108PE",
+                "name": "TP-Link TL-SG108PE",
+                "category": "network_switch",
+                "brand": "TP-Link",
+                "price_rub": 6990,
+                "in_stock": true,
+                "wifi_generation": null,
+                "max_wireless_speed_mbps": null,
+                "wan_speed_mbps": null,
+                "lan_ports": null,
+                "mesh_support": null,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": 8,
+                "port_speed_mbps": 1000,
+                "managed": true,
+                "poe": true,
+                "connection_type": null
+              },
+              {
+                "product_code": "SWT-UB-USW-L8",
+                "name": "Ubiquiti Lite 8 PoE",
+                "category": "network_switch",
+                "brand": "Ubiquiti",
+                "price_rub": 16990,
+                "in_stock": true,
+                "wifi_generation": null,
+                "max_wireless_speed_mbps": null,
+                "wan_speed_mbps": null,
+                "lan_ports": null,
+                "mesh_support": null,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": 8,
+                "port_speed_mbps": 1000,
+                "managed": true,
+                "poe": true,
+                "connection_type": null
+              }
+            ],
+            "total": 2,
+            "error": null
+          },
+          "error": null
+        }
       ],
       "passed": true
     },
@@ -106,7 +642,18 @@
       "session_id": "clarify-1",
       "request": "Подбери устройство",
       "expected": "Агент просит указать категорию и бюджет",
-      "actual": "Возвращён статус needs_input без вызова Tool",
+      "actual": {
+        "status": "needs_input",
+        "answer": "Уточните категорию и бюджет.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -117,7 +664,18 @@
       "session_id": "clarify-2",
       "request": "Нужно улучшить Wi-Fi",
       "expected": "Агент просит уточнить площадь и текущую проблему",
-      "actual": "Возвращён уточняющий вопрос без поиска",
+      "actual": {
+        "status": "needs_input",
+        "answer": "Уточните площадь и текущую проблему.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -128,7 +686,18 @@
       "session_id": "scope-1",
       "request": "Подбери страховку",
       "expected": "Агент сообщает об ограничении предметной области",
-      "actual": "Непрофильный запрос отклонён без вызова Tool",
+      "actual": {
+        "status": "completed",
+        "answer": "Я консультирую только по сетевому оборудованию.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -139,7 +708,18 @@
       "session_id": "scope-2",
       "request": "Расскажи прогноз погоды",
       "expected": "Агент не отвечает вне тематики магазина",
-      "actual": "Возвращено профильное ограничение без вызова Tool",
+      "actual": {
+        "status": "completed",
+        "answer": "Этот вопрос вне тематики магазина.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -151,9 +731,51 @@
       "session_id": "empty-1",
       "request": "Найди роутер дешевле 100 рублей",
       "expected": "Агент не выдумывает товар при пустом результате",
-      "actual": "Каталог вернул no_results, список артикулов пуст",
+      "actual": {
+        "status": "not_found",
+        "answer": "В заданном бюджете роутеров нет.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_products"
+        {
+          "name": "search_products",
+          "status": "no_results",
+          "input": {
+            "filters": {
+              "max_price_rub": 100,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "router",
+              "min_wifi_generation": null,
+              "min_wireless_speed_mbps": null,
+              "min_wan_speed_mbps": null,
+              "min_lan_ports": null,
+              "mesh_support": null
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "no_results",
+            "products": [],
+            "total": 0,
+            "error": {
+              "code": "no_results",
+              "message": "В каталоге нет товаров, соответствующих заданным фильтрам."
+            }
+          },
+          "error": {
+            "code": "no_results",
+            "message": "В каталоге нет товаров, соответствующих заданным фильтрам."
+          }
+        }
       ],
       "passed": true
     },
@@ -164,9 +786,50 @@
       "session_id": "empty-2",
       "request": "Найди Mesh-систему дешевле 100 рублей",
       "expected": "Агент корректно сообщает об отсутствии Mesh-систем",
-      "actual": "Получен status=not_found без выдуманного артикула",
+      "actual": {
+        "status": "not_found",
+        "answer": "В заданном бюджете Mesh-систем нет.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_products"
+        {
+          "name": "search_products",
+          "status": "no_results",
+          "input": {
+            "filters": {
+              "max_price_rub": 100,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "mesh_system",
+              "min_wifi_generation": null,
+              "min_wan_speed_mbps": null,
+              "min_nodes": null,
+              "min_coverage_sqm": null
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "no_results",
+            "products": [],
+            "total": 0,
+            "error": {
+              "code": "no_results",
+              "message": "В каталоге нет товаров, соответствующих заданным фильтрам."
+            }
+          },
+          "error": {
+            "code": "no_results",
+            "message": "В каталоге нет товаров, соответствующих заданным фильтрам."
+          }
+        }
       ],
       "passed": true
     },
@@ -177,9 +840,49 @@
       "session_id": "empty-3",
       "request": "Найди точку доступа дешевле 100 рублей",
       "expected": "Агент корректно сообщает об отсутствии точек доступа",
-      "actual": "Получен status=not_found и пустой список артикулов",
+      "actual": {
+        "status": "not_found",
+        "answer": "В заданном бюджете точек доступа нет.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_products"
+        {
+          "name": "search_products",
+          "status": "no_results",
+          "input": {
+            "filters": {
+              "max_price_rub": 100,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "access_point",
+              "min_wifi_generation": null,
+              "min_wireless_speed_mbps": null,
+              "poe": null
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "no_results",
+            "products": [],
+            "total": 0,
+            "error": {
+              "code": "no_results",
+              "message": "В каталоге нет товаров, соответствующих заданным фильтрам."
+            }
+          },
+          "error": {
+            "code": "no_results",
+            "message": "В каталоге нет товаров, соответствующих заданным фильтрам."
+          }
+        }
       ],
       "passed": true
     },
@@ -190,7 +893,23 @@
       "session_id": "invalid-1",
       "request": "Найди роутер с отрицательной максимальной ценой",
       "expected": "Некорректный диапазон фильтра не передаётся в Tool",
-      "actual": "Возвращён invalid_llm_response, каталог не вызван",
+      "actual": {
+        "status": "failed",
+        "answer": "Не удалось получить корректный ответ языковой модели.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": [
+          {
+            "code": "invalid_llm_response",
+            "message": "Не удалось получить корректный ответ языковой модели."
+          }
+        ]
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -201,7 +920,23 @@
       "session_id": "invalid-2",
       "request": "Найди роутер, если LLM вернула цену строкой «недорого»",
       "expected": "Неверный тип фильтра обрабатывается без падения рантайма",
-      "actual": "Получен контролируемый invalid_llm_response",
+      "actual": {
+        "status": "failed",
+        "answer": "Не удалось получить корректный ответ языковой модели.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": [
+          {
+            "code": "invalid_llm_response",
+            "message": "Не удалось получить корректный ответ языковой модели."
+          }
+        ]
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -212,9 +947,111 @@
       "session_id": "grounding-1",
       "request": "Найди роутер до 7000 рублей",
       "expected": "Артикул итогового ответа должен присутствовать в результате каталога",
-      "actual": "Выдуманный артикул отклонён с invalid_llm_response",
+      "actual": {
+        "status": "failed",
+        "answer": "Не удалось получить корректный ответ языковой модели.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": [
+          {
+            "code": "invalid_llm_response",
+            "message": "Не удалось получить корректный ответ языковой модели."
+          }
+        ]
+      },
       "tool_calls": [
-        "search_products"
+        {
+          "name": "search_products",
+          "status": "ok",
+          "input": {
+            "filters": {
+              "max_price_rub": 7000,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "router",
+              "min_wifi_generation": null,
+              "min_wireless_speed_mbps": null,
+              "min_wan_speed_mbps": null,
+              "min_lan_ports": null,
+              "mesh_support": null
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "ok",
+            "products": [
+              {
+                "product_code": "RTR-DL-R15",
+                "name": "D-Link R15",
+                "category": "router",
+                "brand": "D-Link",
+                "price_rub": 4490,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1500,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 3,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-HW-AX3",
+                "name": "Huawei WiFi AX3",
+                "category": "router",
+                "brand": "Huawei",
+                "price_rub": 5990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 3000,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 3,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-TP-AX23",
+                "name": "TP-Link Archer AX23",
+                "category": "router",
+                "brand": "TP-Link",
+                "price_rub": 6490,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1800,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 4,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              }
+            ],
+            "total": 3,
+            "error": null
+          },
+          "error": null
+        }
       ],
       "passed": true
     },
@@ -225,9 +1062,56 @@
       "session_id": "tool-error-1",
       "request": "Покажи роутеры в наличии",
       "expected": "Недоступность каталога возвращается как контролируемая ошибка Tool",
-      "actual": "Получен catalog_unavailable и status=failed",
+      "actual": {
+        "status": "failed",
+        "answer": "Не удалось выполнить поиск по каталогу товаров.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": [
+          {
+            "code": "catalog_unavailable",
+            "message": "Не удалось выполнить поиск по каталогу товаров."
+          }
+        ]
+      },
       "tool_calls": [
-        "search_products"
+        {
+          "name": "search_products",
+          "status": "error",
+          "input": {
+            "filters": {
+              "max_price_rub": null,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "router",
+              "min_wifi_generation": null,
+              "min_wireless_speed_mbps": null,
+              "min_wan_speed_mbps": null,
+              "min_lan_ports": null,
+              "mesh_support": null
+            },
+            "limit": 10
+          },
+          "output": {
+            "status": "error",
+            "products": [],
+            "total": 0,
+            "error": {
+              "code": "catalog_unavailable",
+              "message": "Не удалось выполнить поиск по каталогу товаров."
+            }
+          },
+          "error": {
+            "code": "catalog_unavailable",
+            "message": "Не удалось выполнить поиск по каталогу товаров."
+          }
+        }
       ],
       "passed": true
     },
@@ -238,7 +1122,23 @@
       "session_id": "llm-error-1",
       "request": "Подбери роутер",
       "expected": "Недоступность LLM не приводит к необработанному исключению",
-      "actual": "Получен llm_unavailable и status=failed",
+      "actual": {
+        "status": "failed",
+        "answer": "Не удалось получить корректный ответ языковой модели.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": [
+          {
+            "code": "llm_unavailable",
+            "message": "Не удалось получить корректный ответ языковой модели."
+          }
+        ]
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -249,7 +1149,22 @@
       "session_id": "memory-save-brand",
       "request": "Запомни, что я предпочитаю Keenetic",
       "expected": "Явно указанное предпочтение сохраняется для user_id",
-      "actual": "Сохранён long-term факт preferred_brands=Keenetic",
+      "actual": {
+        "status": "completed",
+        "answer": "Предпочтение сохранено.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [
+            1
+          ],
+          "operation": "save",
+          "keys": [
+            "preferred_brands"
+          ]
+        },
+        "errors": []
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -260,7 +1175,22 @@
       "session_id": "memory-save-budget",
       "request": "Запомни мой бюджет 10000 рублей",
       "expected": "Бюджет сохраняется как отдельный long-term факт",
-      "actual": "Сохранён факт budget_rub=10000",
+      "actual": {
+        "status": "completed",
+        "answer": "Предпочтение сохранено.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [
+            1
+          ],
+          "operation": "save",
+          "keys": [
+            "budget_rub"
+          ]
+        },
+        "errors": []
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -271,10 +1201,139 @@
       "session_id": "memory-use",
       "request": "Подбери Wi-Fi 6 роутер до 10 000 рублей для тарифа 1 Гбит/с",
       "expected": "Сохранённые бюджет и исключённый бренд поступают в планирование и фильтры",
-      "actual": "Оба факта загружены по user_id и применены в запросе каталога",
+      "actual": {
+        "status": "completed",
+        "answer": "TP-Link Archer AX23 (RTR-TP-AX23) подходит и стоит 6490 рублей.",
+        "sources": [
+          "router_selection.txt"
+        ],
+        "product_codes": [
+          "RTR-TP-AX23"
+        ],
+        "memory": {
+          "used_fact_ids": [
+            2,
+            1
+          ],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [
-        "search_knowledge_base",
-        "search_products"
+        {
+          "name": "search_knowledge_base",
+          "status": "ok",
+          "input": {
+            "query": "требования к роутеру для гигабитного тарифа"
+          },
+          "output": {
+            "status": "ok",
+            "fragments": [
+              {
+                "chunk_id": "router-1",
+                "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+                "source": "router_selection.txt",
+                "score": 0.95
+              }
+            ],
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "sources": [
+              "router_selection.txt"
+            ],
+            "error": null
+          },
+          "error": null
+        },
+        {
+          "name": "search_products",
+          "status": "ok",
+          "input": {
+            "filters": {
+              "max_price_rub": 10000,
+              "brands": [],
+              "excluded_brands": [
+                "D-Link"
+              ],
+              "in_stock": true,
+              "category": "router",
+              "min_wifi_generation": 6,
+              "min_wireless_speed_mbps": null,
+              "min_wan_speed_mbps": 1000,
+              "min_lan_ports": null,
+              "mesh_support": null
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "ok",
+            "products": [
+              {
+                "product_code": "RTR-HW-AX3",
+                "name": "Huawei WiFi AX3",
+                "category": "router",
+                "brand": "Huawei",
+                "price_rub": 5990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 3000,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 3,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-TP-AX23",
+                "name": "TP-Link Archer AX23",
+                "category": "router",
+                "brand": "TP-Link",
+                "price_rub": 6490,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1800,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 4,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-KN-SPR",
+                "name": "Keenetic Sprinter",
+                "category": "router",
+                "brand": "Keenetic",
+                "price_rub": 7990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 3000,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 4,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              }
+            ],
+            "total": 3,
+            "error": null
+          },
+          "error": null
+        }
       ],
       "passed": true
     },
@@ -285,7 +1344,23 @@
       "session_id": "memory-delete",
       "request": "Удали сохранённый бюджет",
       "expected": "Удаляется только выбранный факт пользователя",
-      "actual": "budget_rub удалён, preferred_brands сохранён",
+      "actual": {
+        "status": "completed",
+        "answer": "Предпочтение удалено.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [
+            2,
+            1
+          ],
+          "operation": "delete",
+          "keys": [
+            "budget_rub"
+          ]
+        },
+        "errors": []
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -296,7 +1371,20 @@
       "session_id": "memory-clear",
       "request": "Удали все мои сохранённые предпочтения",
       "expected": "Удаляются только факты запрашивающего user_id",
-      "actual": "Память пользователя очищена, данные другого user_id сохранены",
+      "actual": {
+        "status": "completed",
+        "answer": "Все предпочтения пользователя удалены.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [
+            1
+          ],
+          "operation": "clear",
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -307,7 +1395,17 @@
       "session_id": "memory-sensitive",
       "request": "Запомни пароль Wi-Fi: super-secret",
       "expected": "Чувствительные данные не сохраняются",
-      "actual": "Репозиторий отклонил значение, память пользователя осталась пустой",
+      "actual": {
+        "status": "rejected",
+        "memory": {
+          "used_fact_ids": [],
+          "operation": "save",
+          "keys": [
+            "current_equipment"
+          ]
+        },
+        "remaining_facts": 0
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -318,7 +1416,20 @@
       "session_id": "user-isolation-a",
       "request": "Удали все мои сохранённые предпочтения",
       "expected": "Операции памяти одного user_id не затрагивают другого",
-      "actual": "Данные customer-a удалены, предпочтение customer-b сохранено",
+      "actual": {
+        "status": "completed",
+        "answer": "Все предпочтения пользователя удалены.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [
+            1
+          ],
+          "operation": "clear",
+          "keys": []
+        },
+        "errors": []
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -329,7 +1440,12 @@
       "session_id": "consultation-1",
       "request": "Подбери роутер → До 10000 рублей",
       "expected": "Второе сообщение той же сессии получает предыдущий вопрос и ответ",
-      "actual": "Short-term history передана планировщику, после end_session история удалена",
+      "actual": {
+        "status": "completed",
+        "first_answer": "Какой у вас бюджет?",
+        "second_answer": "Бюджет принят.",
+        "history_used": true
+      },
       "tool_calls": [],
       "passed": true
     },
@@ -340,7 +1456,444 @@
       "session_id": "consultation-owned-by-a",
       "request": "Продолжить чужую консультацию",
       "expected": "Одна session_id не может принадлежать разным user_id в одном процессе",
-      "actual": "Запрос отклонён с invalid_input до обращения к LLM и Tools",
+      "actual": {
+        "status": "failed",
+        "answer": "Указанная сессия принадлежит другому пользователю.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": [
+          {
+            "code": "invalid_input",
+            "message": "Указанная сессия принадлежит другому пользователю."
+          }
+        ]
+      },
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-007",
+      "type": "memory",
+      "user_id": "customer-memory-dialogue",
+      "session_id": "memory-dialogue",
+      "request": "Запомни мой бюджет 10000 рублей → Подбери Wi-Fi 6 роутер",
+      "expected": "Факт сохраняется через агента и влияет на фильтры и ответ следующего запроса",
+      "actual": {
+        "status": "completed",
+        "answer": "С учётом бюджета подходит RTR-TP-AX23.",
+        "sources": [],
+        "product_codes": [
+          "RTR-TP-AX23"
+        ],
+        "memory": {
+          "used_fact_ids": [
+            1
+          ],
+          "operation": "read",
+          "keys": [
+            "budget_rub"
+          ]
+        },
+        "errors": []
+      },
+      "tool_calls": [
+        {
+          "name": "search_products",
+          "status": "ok",
+          "input": {
+            "filters": {
+              "max_price_rub": 10000,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "router",
+              "min_wifi_generation": 6,
+              "min_wireless_speed_mbps": null,
+              "min_wan_speed_mbps": null,
+              "min_lan_ports": null,
+              "mesh_support": null
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "ok",
+            "products": [
+              {
+                "product_code": "RTR-DL-R15",
+                "name": "D-Link R15",
+                "category": "router",
+                "brand": "D-Link",
+                "price_rub": 4490,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1500,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 3,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-HW-AX3",
+                "name": "Huawei WiFi AX3",
+                "category": "router",
+                "brand": "Huawei",
+                "price_rub": 5990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 3000,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 3,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-TP-AX23",
+                "name": "TP-Link Archer AX23",
+                "category": "router",
+                "brand": "TP-Link",
+                "price_rub": 6490,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1800,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 4,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              }
+            ],
+            "total": 3,
+            "error": null
+          },
+          "error": null
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-008",
+      "type": "memory_error",
+      "user_id": "customer-memory-negative",
+      "session_id": "memory-negative",
+      "request": "Запомни мой бюджет -10000 рублей",
+      "expected": "Агент просит указать положительное целое число и не сохраняет отрицательный бюджет",
+      "actual": {
+        "status": "needs_input",
+        "answer": "Не удалось сохранить значение. Для бюджета, площади, количества устройств и скорости тарифа укажите положительное целое число цифрами.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": "save_rejected",
+          "keys": [
+            "budget_rub"
+          ]
+        },
+        "errors": []
+      },
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-009",
+      "type": "memory_error",
+      "user_id": "customer-memory-words",
+      "session_id": "memory-words",
+      "request": "Запомни мой бюджет десять тысяч рублей",
+      "expected": "Агент просит указать число цифрами и не сохраняет ненормализованное значение",
+      "actual": {
+        "status": "needs_input",
+        "answer": "Не удалось сохранить значение. Для бюджета, площади, количества устройств и скорости тарифа укажите положительное целое число цифрами.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": "save_rejected",
+          "keys": [
+            "budget_rub"
+          ]
+        },
+        "errors": []
+      },
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-STATUS-001",
+      "type": "edge",
+      "user_id": "customer-status-catalog",
+      "session_id": "status-catalog",
+      "request": "Подбери роутер, даже если дополнительная инструкция не найдена",
+      "expected": "Успешный каталог делает комбинированный подбор completed при пустом RAG",
+      "actual": {
+        "status": "completed",
+        "answer": "В каталоге найден RTR-TP-AX23.",
+        "sources": [],
+        "product_codes": [
+          "RTR-TP-AX23"
+        ],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
+      "tool_calls": [
+        {
+          "name": "search_knowledge_base",
+          "status": "no_results",
+          "input": {
+            "query": "несуществующая инструкция"
+          },
+          "output": {
+            "status": "no_results",
+            "fragments": [],
+            "context": "",
+            "sources": [],
+            "error": {
+              "code": "no_results",
+              "message": "В базе знаний не найдено релевантных материалов."
+            }
+          },
+          "error": {
+            "code": "no_results",
+            "message": "В базе знаний не найдено релевантных материалов."
+          }
+        },
+        {
+          "name": "search_products",
+          "status": "ok",
+          "input": {
+            "filters": {
+              "max_price_rub": 7000,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "router",
+              "min_wifi_generation": null,
+              "min_wireless_speed_mbps": null,
+              "min_wan_speed_mbps": null,
+              "min_lan_ports": null,
+              "mesh_support": null
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "ok",
+            "products": [
+              {
+                "product_code": "RTR-DL-R15",
+                "name": "D-Link R15",
+                "category": "router",
+                "brand": "D-Link",
+                "price_rub": 4490,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1500,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 3,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-HW-AX3",
+                "name": "Huawei WiFi AX3",
+                "category": "router",
+                "brand": "Huawei",
+                "price_rub": 5990,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 3000,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 3,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              },
+              {
+                "product_code": "RTR-TP-AX23",
+                "name": "TP-Link Archer AX23",
+                "category": "router",
+                "brand": "TP-Link",
+                "price_rub": 6490,
+                "in_stock": true,
+                "wifi_generation": 6,
+                "max_wireless_speed_mbps": 1800,
+                "wan_speed_mbps": 1000,
+                "lan_ports": 4,
+                "mesh_support": true,
+                "nodes": null,
+                "coverage_sqm": null,
+                "port_count": null,
+                "port_speed_mbps": null,
+                "managed": null,
+                "poe": null,
+                "connection_type": null
+              }
+            ],
+            "total": 3,
+            "error": null
+          },
+          "error": null
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-STATUS-002",
+      "type": "edge",
+      "user_id": "customer-status-empty",
+      "session_id": "status-empty",
+      "request": "Подбери роутер дешевле 100 рублей с учётом правил выбора",
+      "expected": "Пустой каталог делает комбинированный подбор not_found при успешном RAG",
+      "actual": {
+        "status": "not_found",
+        "answer": "Подходящих товаров нет.",
+        "sources": [
+          "router_selection.txt"
+        ],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
+      "tool_calls": [
+        {
+          "name": "search_knowledge_base",
+          "status": "ok",
+          "input": {
+            "query": "требования к роутеру для гигабитного тарифа"
+          },
+          "output": {
+            "status": "ok",
+            "fragments": [
+              {
+                "chunk_id": "router-1",
+                "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+                "source": "router_selection.txt",
+                "score": 0.95
+              }
+            ],
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "sources": [
+              "router_selection.txt"
+            ],
+            "error": null
+          },
+          "error": null
+        },
+        {
+          "name": "search_products",
+          "status": "no_results",
+          "input": {
+            "filters": {
+              "max_price_rub": 100,
+              "brands": [],
+              "excluded_brands": [],
+              "in_stock": true,
+              "category": "router",
+              "min_wifi_generation": null,
+              "min_wireless_speed_mbps": null,
+              "min_wan_speed_mbps": null,
+              "min_lan_ports": null,
+              "mesh_support": null
+            },
+            "limit": 3
+          },
+          "output": {
+            "status": "no_results",
+            "products": [],
+            "total": 0,
+            "error": {
+              "code": "no_results",
+              "message": "В каталоге нет товаров, соответствующих заданным фильтрам."
+            }
+          },
+          "error": {
+            "code": "no_results",
+            "message": "В каталоге нет товаров, соответствующих заданным фильтрам."
+          }
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-SESSION-003",
+      "type": "session_error",
+      "user_id": "customer-session-error",
+      "session_id": "session-error-history",
+      "request": "Первый запрос с ошибкой → Продолжи диалог",
+      "expected": "После контролируемой ошибки история содержит парные user/assistant сообщения",
+      "actual": {
+        "status": "completed",
+        "previous_status": "failed",
+        "paired_history": true,
+        "answer": "Диалог продолжен."
+      },
+      "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-MEMORY-ERROR-002",
+      "type": "memory_error",
+      "user_id": "customer-memory-db-error",
+      "session_id": "memory-db-error",
+      "request": "Подбери роутер с недоступной памятью",
+      "expected": "Ошибка SQLite контролируемо возвращается пользователю и подробно логируется в debug",
+      "actual": {
+        "status": "failed",
+        "answer": "Не удалось обратиться к памяти пользователя.",
+        "sources": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": [
+          {
+            "code": "memory_unavailable",
+            "message": "Не удалось обратиться к памяти пользователя."
+          }
+        ]
+      },
       "tool_calls": [],
       "passed": true
     }

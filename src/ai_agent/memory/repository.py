@@ -3,7 +3,7 @@ import datetime
 import sqlite3
 import typing
 
-from ai_agent import contracts, sqlite
+from ai_agent import contracts, sqlite_resource
 
 SENSITIVE_MARKERS: typing.Final = (
     "пароль",
@@ -13,10 +13,17 @@ SENSITIVE_MARKERS: typing.Final = (
     "номер карты",
     "cvv",
 )
+POSITIVE_INTEGER_KEYS: typing.Final = {
+    contracts.MemoryKey.BUDGET_RUB,
+    contracts.MemoryKey.AREA_SQM,
+    contracts.MemoryKey.DEVICE_COUNT,
+    contracts.MemoryKey.TARIFF_SPEED_MBPS,
+}
+POSITIVE_INTEGER_ERROR: typing.Final = "Numeric memory values must be positive integers."
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
-class MemoryRepository(sqlite.BaseSQLiteResource):
+class MemoryRepository(sqlite_resource.BaseSQLiteResource):
     def __post_init__(self) -> None:
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
         with self.connect() as connection:
@@ -47,12 +54,10 @@ class MemoryRepository(sqlite.BaseSQLiteResource):
         expires_at: datetime.datetime | None = None,
     ) -> contracts.MemoryFact:
         normalized_user_id: typing.Final = user_id.strip()
-        normalized_value: typing.Final = value.strip()
+        normalized_value: typing.Final = self._normalize_value(key, value)
         normalized_source: typing.Final = source.strip()
         if not normalized_user_id or not normalized_value or not normalized_source:
             raise ValueError("Memory fields must not be empty.")
-        if any(marker in normalized_value.lower() for marker in SENSITIVE_MARKERS):
-            raise ValueError("Sensitive data must not be stored in memory.")
 
         now: typing.Final = datetime.datetime.now(datetime.UTC)
         with self.connect() as connection:
@@ -124,6 +129,15 @@ class MemoryRepository(sqlite.BaseSQLiteResource):
     def clear(self) -> None:
         with self.connect() as connection:
             connection.execute("DELETE FROM memory_facts")
+
+    @staticmethod
+    def _normalize_value(key: contracts.MemoryKey, value: str) -> str:
+        normalized_value: typing.Final = value.strip()
+        if any(marker in normalized_value.lower() for marker in SENSITIVE_MARKERS):
+            raise ValueError("Sensitive data must not be stored in memory.")
+        if key in POSITIVE_INTEGER_KEYS and (not normalized_value.isdecimal() or int(normalized_value) <= 0):
+            raise ValueError(POSITIVE_INTEGER_ERROR)
+        return normalized_value
 
     @staticmethod
     def _to_fact(row: sqlite3.Row) -> contracts.MemoryFact:

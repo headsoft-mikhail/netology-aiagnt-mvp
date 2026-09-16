@@ -5,7 +5,7 @@ import typing
 from sentence_transformers import SentenceTransformer
 
 from ai_agent.rag import manifest
-from ai_agent.rag.config import PipelineConfig
+from ai_agent.rag.pipelines.config import PipelineConfig
 from ai_agent.rag.pipelines.embeddings.stages import embedding
 from ai_agent.rag.pipelines.embeddings.stages.exporter import EmbeddingExporter
 from ai_agent.rag.pipelines.embeddings.stages.loader import load_chunks

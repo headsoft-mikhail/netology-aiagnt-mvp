@@ -2,7 +2,7 @@ import dataclasses
 import json
 import typing
 
-from ai_agent.rag.config import PathsConfig
+from ai_agent.rag.pipelines.config import PathsConfig
 from ai_agent.rag.pipelines.vector_store.stages.search import VectorSearchResult
 
 

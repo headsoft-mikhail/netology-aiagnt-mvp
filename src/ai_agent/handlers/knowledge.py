@@ -4,7 +4,7 @@ import time
 import typing
 
 from ai_agent import contracts
-from ai_agent.handlers import runtime
+from ai_agent.handlers import helpers, runtime
 from ai_agent.llm import models as llm_models
 from ai_agent.tools import registry, search_knowledge_base
 
@@ -41,7 +41,7 @@ class KnowledgeSearchHandler:
             level=logging.WARNING if result.status is contracts.ToolStatus.NO_RESULTS else logging.INFO,
             tool=search_knowledge_base.SEARCH_KNOWLEDGE_BASE_TOOL_NAME,
             status=result.status.value,
-            duration_ms=runtime.duration_ms(started_at),
+            duration_ms=helpers.duration_ms(started_at),
             results_count=len(result.fragments),
         )
         context.log(
