@@ -6,8 +6,8 @@ import pydantic
 from qdrant_client.conversions.common_types import ScoredPoint
 
 from ai_agent import contracts
-from ai_agent.rag import models
-from ai_agent.rag.context import ContextBuilder
+from ai_agent.rag.retrieval import models
+from ai_agent.rag.retrieval.context import ContextBuilder
 from ai_agent.tools import protocol
 
 NO_KNOWLEDGE_RESULTS_MESSAGE: typing.Final = "В базе знаний не найдено релевантных материалов."

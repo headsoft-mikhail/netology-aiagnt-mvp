@@ -4,8 +4,8 @@ import typing
 
 import qdrant_client
 
-from ai_agent.rag import models
-from ai_agent.rag.config import VectorStoreConfig
+from ai_agent.rag.pipelines import models
+from ai_agent.rag.pipelines.config import VectorStoreConfig
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
 

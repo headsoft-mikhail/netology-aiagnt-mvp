@@ -1,6 +1,5 @@
 import dataclasses
 import logging
-import time
 import typing
 
 from ai_agent import contracts, state
@@ -129,7 +128,3 @@ class RunContext:
             errors=len(response.errors),
         )
         return response
-
-
-def duration_ms(started_at: float) -> float:
-    return round((time.perf_counter() - started_at) * 1000, 2)

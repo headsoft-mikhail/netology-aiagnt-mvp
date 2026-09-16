@@ -8,8 +8,8 @@ from qdrant_client import models as qdrant_models
 from qdrant_client.conversions import common_types as qdrant_types
 from qdrant_client.conversions.common_types import VectorParams
 
-from ai_agent.rag import models as rag_models
-from ai_agent.rag.config import VectorStoreConfig
+from ai_agent.rag.pipelines import models as rag_models
+from ai_agent.rag.pipelines.config import VectorStoreConfig
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
 

@@ -4,8 +4,8 @@ import re
 import typing
 import unicodedata
 
-from ai_agent.rag import models
-from ai_agent.rag.config import NormalizationConfig
+from ai_agent.rag.pipelines import models
+from ai_agent.rag.pipelines.config import NormalizationConfig
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
 

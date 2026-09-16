@@ -13,8 +13,8 @@ from ai_agent.llm import config as llm_config
 from ai_agent.llm.service import LLMService
 from ai_agent.memory import repository as memory_repository
 from ai_agent.memory.config import memory_config
-from ai_agent.rag import config as rag_config
-from ai_agent.rag import context, retrieval
+from ai_agent.rag.retrieval import config as retrieval_config
+from ai_agent.rag.retrieval import context, retrieval
 from ai_agent.tools import registry, search_knowledge_base, search_products
 
 EXIT_SUCCESS: typing.Final = 0
@@ -86,7 +86,7 @@ def start_agent(
 
 
 def create_agent() -> AgentRunner:
-    loaded_retrieval_config: typing.Final = rag_config.load_retrieval_config()
+    loaded_retrieval_config: typing.Final = retrieval_config.load_retrieval_config()
 
     if not catalog_config.database_path.exists():
         raise RuntimeError("Каталог не подготовлен. Выполните `just catalog_restore`.")

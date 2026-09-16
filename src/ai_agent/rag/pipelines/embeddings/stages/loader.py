@@ -3,8 +3,8 @@ import logging
 import typing
 from pathlib import Path
 
-from ai_agent.rag import models
-from ai_agent.rag.models import Chunk
+from ai_agent.rag.pipelines import models
+from ai_agent.rag.pipelines.models import Chunk
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
 

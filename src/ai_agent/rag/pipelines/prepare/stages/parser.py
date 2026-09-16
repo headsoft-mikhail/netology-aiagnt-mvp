@@ -6,7 +6,7 @@ from typing import Any
 
 from bs4 import BeautifulSoup
 
-from ai_agent.rag import models
+from ai_agent.rag.pipelines import models
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
 

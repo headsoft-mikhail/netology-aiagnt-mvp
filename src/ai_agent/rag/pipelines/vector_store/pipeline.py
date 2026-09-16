@@ -4,8 +4,8 @@ import typing
 
 from qdrant_client import QdrantClient
 
-from ai_agent.rag import manifest
-from ai_agent.rag.config import PipelineConfig
+from ai_agent.rag import helpers, manifest
+from ai_agent.rag.pipelines.config import PipelineConfig
 from ai_agent.rag.pipelines.vector_store.stages.exporter import VectorStoreExporter
 from ai_agent.rag.pipelines.vector_store.stages.loader import load_embeddings
 from ai_agent.rag.pipelines.vector_store.stages.search import VectorStoreSearcher
@@ -19,6 +19,7 @@ class RAGVectorStorePipeline:
     def __init__(self, config: PipelineConfig):
         self.config: PipelineConfig = config
 
+        helpers.configure_local_sqlite_thread_check()
         store_client: typing.Final = QdrantClient(path=str(self.config.paths.vector_store))
         self.store = QdrantStore(config=self.config.vector_store, client=store_client)
         self.validator = VectorStoreValidator(config=self.config.vector_store)

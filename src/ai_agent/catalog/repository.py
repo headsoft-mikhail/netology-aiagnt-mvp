@@ -4,7 +4,7 @@ import pathlib
 import sqlite3
 import typing
 
-from ai_agent import sqlite
+from ai_agent import sqlite_resource
 from ai_agent.catalog import models
 
 OPTIONAL_INTEGER_FIELDS: typing.Final = {
@@ -21,7 +21,7 @@ OPTIONAL_BOOLEAN_FIELDS: typing.Final = {"mesh_support", "managed", "poe"}
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
-class ProductsRepository(sqlite.BaseSQLiteResource):
+class ProductsRepository(sqlite_resource.BaseSQLiteResource):
     def restore_from_snapshot(self, snapshot_path: pathlib.Path) -> int:
         """Atomically restore the SQLite catalog from a versioned CSV snapshot."""
         products: typing.Final = self._load_products(snapshot_path)
@@ -30,7 +30,7 @@ class ProductsRepository(sqlite.BaseSQLiteResource):
         temporary_db_path.unlink(missing_ok=True)
 
         try:
-            with sqlite3.connect(temporary_db_path) as connection:
+            with sqlite_resource.connect(temporary_db_path) as connection:
                 connection.execute("""
                     CREATE TABLE products (
                         product_code TEXT PRIMARY KEY,

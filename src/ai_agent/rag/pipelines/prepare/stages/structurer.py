@@ -1,7 +1,7 @@
 import hashlib
 import typing
 
-from ai_agent.rag import models
+from ai_agent.rag.pipelines import models
 
 
 class DocumentStructurer:

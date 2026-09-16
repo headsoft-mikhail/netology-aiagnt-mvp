@@ -84,34 +84,32 @@ class AgentRunner:
 
         memory_response: typing.Final = self._memory_handler.load(run_context)
         if memory_response is not None:
-            return memory_response
+            return self._complete_request_with_assistant_response(current_session, memory_response)
 
         planning_result: typing.Final = self._planning_handler.handle(
             run_context,
             current_session.messages[:-1],
         )
         if isinstance(planning_result, contracts.AgentResponse):
-            return planning_result
+            return self._complete_request_with_assistant_response(current_session, planning_result)
         plan: typing.Final = typing.cast(llm_models.AgentPlan, planning_result)
 
         direct_response: typing.Final = self._direct_handler.handle(plan, run_context)
         if direct_response is not None:
-            current_session.add("assistant", direct_response.answer)
-            return direct_response
+            return self._complete_request_with_assistant_response(current_session, direct_response)
 
         if contracts.AgentAction.SEARCH_KNOWLEDGE_BASE in plan.actions:
             knowledge_error: typing.Final = self._knowledge_handler.handle(plan, run_context)
             if knowledge_error is not None:
-                return knowledge_error
+                return self._complete_request_with_assistant_response(current_session, knowledge_error)
 
         if contracts.AgentAction.SEARCH_PRODUCTS in plan.actions:
             catalog_error: typing.Final = self._catalog_handler.handle(run_context)
             if catalog_error is not None:
-                return catalog_error
+                return self._complete_request_with_assistant_response(current_session, catalog_error)
 
         response: typing.Final = self._final_answer_handler.handle(run_context)
-        current_session.add("assistant", response.answer)
-        return response
+        return self._complete_request_with_assistant_response(current_session, response)
 
     def end_session(self, session_id: str) -> None:
         current_session: typing.Final = self._sessions.pop(session_id, None)
@@ -138,3 +136,11 @@ class AgentRunner:
         )
         self._sessions[session_id] = created_session
         return created_session
+
+    @staticmethod
+    def _complete_request_with_assistant_response(
+        current_session: session.SessionMemory,
+        response: contracts.AgentResponse,
+    ) -> contracts.AgentResponse:
+        current_session.add("assistant", response.answer)
+        return response

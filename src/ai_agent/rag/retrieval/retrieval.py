@@ -5,7 +5,8 @@ import qdrant_client.models
 from qdrant_client.conversions.common_types import ScoredPoint
 from sentence_transformers import SentenceTransformer
 
-from ai_agent.rag.config import RetrievalConfig
+from ai_agent.rag import helpers
+from ai_agent.rag.retrieval.config import RetrievalConfig
 
 
 class RetrievalClient:
@@ -25,6 +26,7 @@ class RetrievalClient:
             f"query: {normalized_query}",
             normalize_embeddings=True,
         ).tolist()
+        helpers.configure_local_sqlite_thread_check()
         client: typing.Final = qdrant_client.QdrantClient(path=str(self.config.vector_store_path))
         query_filter: typing.Final = qdrant_client.models.Filter(
             must_not=[

@@ -6,8 +6,8 @@ import typing
 
 from datasketch import MinHash
 
-from ai_agent.rag import models
-from ai_agent.rag.config import DeduplicationConfig
+from ai_agent.rag.pipelines import models
+from ai_agent.rag.pipelines.config import DeduplicationConfig
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
 

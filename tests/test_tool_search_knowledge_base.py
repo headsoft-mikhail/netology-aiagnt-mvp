@@ -3,7 +3,7 @@ import typing
 import qdrant_client.models
 
 from ai_agent import contracts
-from ai_agent.rag import context, models
+from ai_agent.rag.retrieval import context, models
 from ai_agent.tools import search_knowledge_base
 
 QUERY: typing.Final = "Как выбрать роутер?"

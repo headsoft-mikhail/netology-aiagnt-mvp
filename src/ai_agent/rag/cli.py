@@ -2,7 +2,7 @@ import argparse
 import shutil
 import typing
 
-from ai_agent.rag import config as rag_config
+from ai_agent.rag.pipelines import config
 
 
 def main() -> None:
@@ -18,7 +18,7 @@ def main() -> None:
 
     args: typing.Final = parser.parse_args()
 
-    pipeline_config: typing.Final = rag_config.load_pipeline_config()
+    pipeline_config: typing.Final = config.load_pipeline_config()
 
     if args.command == "prepare":
         from ai_agent.rag.pipelines.prepare.pipeline import RAGPreparePipeline

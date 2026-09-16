@@ -13,6 +13,12 @@ UPDATED_BUDGET: typing.Final = "15000"
 FIRST_PREFERRED_BRAND: typing.Final = "Keenetic"
 SECOND_PREFERRED_BRAND: typing.Final = "ASUS"
 MEMORY_SOURCE: typing.Final = "explicit_user_request"
+INVALID_NUMERIC_MEMORY_VALUES: typing.Final = (
+    "0",
+    "-1",
+    "10.5",
+    "десять тысяч рублей",
+)
 
 
 def test_new_explicit_budget_replaces_previous_value_for_same_user(
@@ -75,6 +81,40 @@ def test_memory_rejects_sensitive_value(tmp_path: pathlib.Path, faker: faker_lib
             user_id,
             contracts.MemoryKey.CURRENT_EQUIPMENT,
             sensitive_value,
+            source=MEMORY_SOURCE,
+        )
+
+    remaining_facts: typing.Final = memory.get_relevant(user_id, limit=10)
+    reporting.record_custom_result(
+        "TC-MEMORY-006",
+        {
+            "status": "rejected",
+            "memory": {
+                "used_fact_ids": [],
+                "operation": "save",
+                "keys": [contracts.MemoryKey.CURRENT_EQUIPMENT.value],
+            },
+            "remaining_facts": len(remaining_facts),
+        },
+    )
+
+    assert remaining_facts == []
+
+
+@pytest.mark.parametrize("invalid_value", INVALID_NUMERIC_MEMORY_VALUES)
+def test_memory_rejects_invalid_numeric_value(
+    tmp_path: pathlib.Path,
+    faker: faker_lib.Faker,
+    invalid_value: str,
+) -> None:
+    user_id: typing.Final = faker.uuid4()
+    memory: typing.Final = repository.MemoryRepository(database_path=tmp_path / "memory.db")
+
+    with pytest.raises(ValueError, match=repository.POSITIVE_INTEGER_ERROR):
+        memory.save_fact(
+            user_id,
+            contracts.MemoryKey.BUDGET_RUB,
+            invalid_value,
             source=MEMORY_SOURCE,
         )
 

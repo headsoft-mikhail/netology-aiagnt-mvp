@@ -3,7 +3,7 @@ import typing
 import pytest
 
 from ai_agent import contracts
-from ai_agent.rag import config, context, models, retrieval
+from ai_agent.rag.retrieval import config, context, models, retrieval
 from ai_agent.tools import search_knowledge_base
 
 RELEVANT_QUERY: typing.Final = "Какой роутер подойдёт для тарифа 1 Гбит/с?"

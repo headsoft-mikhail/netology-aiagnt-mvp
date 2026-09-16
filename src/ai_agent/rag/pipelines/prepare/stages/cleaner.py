@@ -2,7 +2,7 @@ import logging
 import re
 import typing
 
-from ai_agent.rag import models
+from ai_agent.rag.pipelines import models
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
 

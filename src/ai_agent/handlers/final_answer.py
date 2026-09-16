@@ -4,9 +4,30 @@ import time
 import typing
 
 from ai_agent import contracts
-from ai_agent.handlers import runtime
+from ai_agent.catalog import models as catalog_models
+from ai_agent.handlers import helpers, runtime
 from ai_agent.llm import client as llm_client
 from ai_agent.llm.service import LLMService
+
+type SearchResult = contracts.KnowledgeBaseSearchResult | catalog_models.ProductSearchResult
+type ResultField = typing.Literal["knowledge_result", "catalog_result"]
+
+
+@dataclasses.dataclass(frozen=True, kw_only=True, slots=True)
+class ActionResultPolicy:
+    result_field: ResultField
+    optional_when_actions_present: frozenset[contracts.AgentAction] = frozenset()
+
+
+ACTION_RESULT_POLICIES: typing.Final = {
+    contracts.AgentAction.SEARCH_KNOWLEDGE_BASE: ActionResultPolicy(
+        result_field="knowledge_result",
+        optional_when_actions_present=frozenset({contracts.AgentAction.SEARCH_PRODUCTS}),
+    ),
+    contracts.AgentAction.SEARCH_PRODUCTS: ActionResultPolicy(
+        result_field="catalog_result",
+    ),
+}
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
@@ -56,12 +77,10 @@ class FinalAnswerHandler:
             "llm_request_completed",
             phase="final_answer",
             model=self.llm.model_name,
-            duration_ms=runtime.duration_ms(started_at),
+            duration_ms=helpers.duration_ms(started_at),
         )
 
-        status: typing.Final = (
-            contracts.AgentRunStatus.NOT_FOUND if self._has_no_results(context) else contracts.AgentRunStatus.COMPLETED
-        )
+        status: typing.Final = self._resolve_status(context)
         return context.response(status, draft.answer, product_codes=draft.product_codes)
 
     @staticmethod
@@ -77,9 +96,17 @@ class FinalAnswerHandler:
             raise llm_client.InvalidLLMResponseError("LLM mentioned a product outside the catalog result.")
 
     @staticmethod
-    def _has_no_results(context: runtime.RunContext) -> bool:
-        results: typing.Final = (
-            context.agent_state.knowledge_result,
-            context.agent_state.catalog_result,
-        )
-        return any(result is not None and result.status is contracts.ToolStatus.NO_RESULTS for result in results)
+    def _resolve_status(context: runtime.RunContext) -> contracts.AgentRunStatus:
+        selected_actions: typing.Final = set(context.agent_state.selected_actions)
+        for action in selected_actions:
+            policy = ACTION_RESULT_POLICIES.get(action)
+            if policy is None or policy.optional_when_actions_present & selected_actions:
+                continue
+            result = typing.cast(
+                SearchResult | None,
+                getattr(context.agent_state, policy.result_field),
+            )
+            if result is not None and result.status is contracts.ToolStatus.NO_RESULTS:
+                return contracts.AgentRunStatus.NOT_FOUND
+
+        return contracts.AgentRunStatus.COMPLETED

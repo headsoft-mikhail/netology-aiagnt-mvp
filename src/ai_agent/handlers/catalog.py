@@ -5,7 +5,7 @@ import typing
 
 from ai_agent import contracts
 from ai_agent.catalog import models as catalog_models
-from ai_agent.handlers import runtime
+from ai_agent.handlers import helpers, runtime
 from ai_agent.llm import client as llm_client
 from ai_agent.llm.service import LLMService
 from ai_agent.tools import registry, search_products
@@ -32,7 +32,7 @@ class CatalogSearchHandler:
             "llm_request_completed",
             phase="catalog_filters",
             model=self.llm.model_name,
-            duration_ms=runtime.duration_ms(filters_started_at),
+            duration_ms=helpers.duration_ms(filters_started_at),
         )
         arguments: typing.Final = filters.model_dump(mode="json")
         context.log("catalog_filters_validated", filters=arguments)
@@ -55,7 +55,7 @@ class CatalogSearchHandler:
             level=logging.WARNING if result.status is contracts.ToolStatus.NO_RESULTS else logging.INFO,
             tool=search_products.SEARCH_PRODUCTS_TOOL_NAME,
             status=result.status.value,
-            duration_ms=runtime.duration_ms(tool_started_at),
+            duration_ms=helpers.duration_ms(tool_started_at),
             results_count=result.total,
         )
         if result.status is contracts.ToolStatus.ERROR:

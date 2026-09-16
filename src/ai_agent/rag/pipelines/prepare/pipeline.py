@@ -3,7 +3,7 @@ import logging
 import typing
 
 from ai_agent.rag import manifest
-from ai_agent.rag.config import PipelineConfig
+from ai_agent.rag.pipelines.config import PipelineConfig
 from ai_agent.rag.pipelines.prepare.stages.cleaner import TextCleaner
 from ai_agent.rag.pipelines.prepare.stages.deduplication import Deduplicator
 from ai_agent.rag.pipelines.prepare.stages.exporter import DatasetExporter

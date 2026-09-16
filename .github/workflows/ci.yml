@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.14.5"
+
+jobs:
+  quality:
+    name: Quality
+    if: ${{ github.event.action != 'closed' || github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.1.0
+        with:
+          enable-cache: true
+
+      - name: Set up just
+        uses: extractions/setup-just@v4
+
+      - name: Install dependencies
+        run: just install
+
+      - name: Run formatters, linters, and type checker
+        run: just lint
+
+      - name: Verify that quality checks made no changes
+        run: git diff --exit-code
