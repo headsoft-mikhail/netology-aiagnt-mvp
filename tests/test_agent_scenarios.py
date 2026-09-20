@@ -6,6 +6,7 @@ import sqlite3
 import typing
 
 import faker as faker_lib
+import pydantic
 import pytest
 import qdrant_client.models
 
@@ -36,6 +37,8 @@ MEMORY_LIMIT: typing.Final = 10
 NO_RESULT_MAX_PRICE: typing.Final = 100
 CATALOG_RESULT_LIMIT: typing.Final = 3
 CONTEXT_MIN_SCORE: typing.Final = 0.8
+MAX_CONTEXT_TOKENS: typing.Final = 1800
+CONTEXT_TOKENIZER_MODEL: typing.Final = "text-embedding-3-small"
 RETRIEVAL_SCORE: typing.Final = 0.95
 TEST_MODEL_NAME: typing.Final = "scripted-test-model"
 UNAVAILABLE_MODEL_NAME: typing.Final = "unavailable-test-model"
@@ -176,19 +179,34 @@ INVALID_MEMORY_CASES: typing.Final = (
 )
 
 
+def validate_scripted_response[ResponseModel: pydantic.BaseModel](
+    output_type: type[ResponseModel],
+    response: dict[str, object],
+) -> ResponseModel:
+    try:
+        return output_type.model_validate(response)
+    except pydantic.ValidationError as error:
+        raise llm_client.InvalidLLMResponseError(f"LLM returned invalid {output_type.__name__}.") from error
+
+
 class ScriptedChatClient:
     def __init__(self, responses: list[dict[str, object]]) -> None:
-        self.responses = [json.dumps(response, ensure_ascii=False) for response in responses]
+        self.responses = responses.copy()
         self.calls: list[tuple[str, str]] = []
 
     @property
     def model_name(self) -> str:
         return TEST_MODEL_NAME
 
-    def complete(self, system_prompt: str, user_prompt: str, *, json_mode: bool) -> str:
-        assert json_mode
+    def complete[ResponseModel: pydantic.BaseModel](
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        output_type: type[ResponseModel],
+    ) -> ResponseModel:
         self.calls.append((system_prompt, user_prompt))
-        return self.responses.pop(0)
+        return validate_scripted_response(output_type, self.responses.pop(0))
 
 
 class FakeRetrievalClient:
@@ -220,7 +238,7 @@ class EmptyRetrievalClient:
 
 class FailOnceChatClient:
     def __init__(self, response: dict[str, object]) -> None:
-        self.response = json.dumps(response, ensure_ascii=False)
+        self.response = response
         self.calls: list[tuple[str, str]] = []
         self.failed = False
 
@@ -228,13 +246,18 @@ class FailOnceChatClient:
     def model_name(self) -> str:
         return TEST_MODEL_NAME
 
-    def complete(self, system_prompt: str, user_prompt: str, *, json_mode: bool) -> str:
-        assert json_mode
+    def complete[ResponseModel: pydantic.BaseModel](
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        output_type: type[ResponseModel],
+    ) -> ResponseModel:
         self.calls.append((system_prompt, user_prompt))
         if not self.failed:
             self.failed = True
             raise llm_client.LLMUnavailableError("Temporary LLM failure in test")
-        return self.response
+        return validate_scripted_response(output_type, self.response)
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
@@ -249,7 +272,14 @@ class UnavailableChatClient:
     def model_name(self) -> str:
         return UNAVAILABLE_MODEL_NAME
 
-    def complete(self, system_prompt: str, user_prompt: str, *, json_mode: bool) -> typing.NoReturn:
+    def complete[ResponseModel: pydantic.BaseModel](
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        output_type: type[ResponseModel],
+    ) -> typing.NoReturn:
+        del system_prompt, user_prompt, output_type
         raise llm_client.LLMUnavailableError("LLM unavailable in test")
 
 
@@ -289,7 +319,11 @@ def create_tool_registry(
         tools=(
             search_knowledge_base.KnowledgeBaseSearchTool(
                 retrieval_client=retrieval_client or FakeRetrievalClient(),
-                context_builder=context.ContextBuilder(min_score=CONTEXT_MIN_SCORE),
+                context_builder=context.ContextBuilder(
+                    min_score=CONTEXT_MIN_SCORE,
+                    max_context_tokens=MAX_CONTEXT_TOKENS,
+                    tokenizer_model=CONTEXT_TOKENIZER_MODEL,
+                ),
             ),
             search_products.ProductSearchTool(catalog=catalog),
         )

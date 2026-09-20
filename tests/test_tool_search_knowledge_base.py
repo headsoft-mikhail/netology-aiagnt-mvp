@@ -8,6 +8,16 @@ from ai_agent.tools import search_knowledge_base
 
 QUERY: typing.Final = "Как выбрать роутер?"
 SOURCE: typing.Final = "router_selection.txt"
+MAX_CONTEXT_TOKENS: typing.Final = 1800
+TOKENIZER_MODEL: typing.Final = "text-embedding-3-small"
+
+
+def create_context_builder() -> context.ContextBuilder:
+    return context.ContextBuilder(
+        min_score=0.8,
+        max_context_tokens=MAX_CONTEXT_TOKENS,
+        tokenizer_model=TOKENIZER_MODEL,
+    )
 
 
 class FakeRetrievalClient:
@@ -41,7 +51,7 @@ def test_search_knowledge_base_returns_context_and_sources() -> None:
     result: typing.Final = search_knowledge_base.search_knowledge_base(
         models.KnowledgeSearchInput(query=QUERY),
         FakeRetrievalClient([create_point(0.9)]),
-        context.ContextBuilder(min_score=0.8),
+        create_context_builder(),
     )
 
     assert result.status is contracts.ToolStatus.OK
@@ -54,7 +64,7 @@ def test_search_knowledge_base_returns_no_results_below_threshold() -> None:
     result: typing.Final = search_knowledge_base.search_knowledge_base(
         models.KnowledgeSearchInput(query=QUERY),
         FakeRetrievalClient([create_point(0.79)]),
-        context.ContextBuilder(min_score=0.8),
+        create_context_builder(),
     )
 
     assert result.status is contracts.ToolStatus.NO_RESULTS
@@ -62,11 +72,27 @@ def test_search_knowledge_base_returns_no_results_below_threshold() -> None:
     assert result.error.message == search_knowledge_base.NO_KNOWLEDGE_RESULTS_MESSAGE
 
 
+def test_search_knowledge_base_respects_context_token_limit() -> None:
+    result: typing.Final = search_knowledge_base.search_knowledge_base(
+        models.KnowledgeSearchInput(query=QUERY),
+        FakeRetrievalClient([create_point(0.9)]),
+        context.ContextBuilder(
+            min_score=0.8,
+            max_context_tokens=1,
+            tokenizer_model=TOKENIZER_MODEL,
+        ),
+    )
+
+    assert result.status is contracts.ToolStatus.NO_RESULTS
+    assert result.fragments == []
+    assert result.context == ""
+
+
 def test_search_knowledge_base_returns_safe_retrieval_error() -> None:
     result: typing.Final = search_knowledge_base.search_knowledge_base(
         models.KnowledgeSearchInput(query=QUERY),
         FailingRetrievalClient(),
-        context.ContextBuilder(min_score=0.8),
+        create_context_builder(),
     )
 
     assert result.status is contracts.ToolStatus.ERROR

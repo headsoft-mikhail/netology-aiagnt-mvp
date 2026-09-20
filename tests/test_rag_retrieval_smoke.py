@@ -12,10 +12,13 @@ IRRELEVANT_QUERY: typing.Final = "Сколько стоит страховани
 
 @pytest.fixture(scope="module")
 def knowledge_search_dependencies() -> tuple[retrieval.RetrievalClient, context.ContextBuilder]:
-    retrieval_config: typing.Final = config.load_retrieval_config()
     return (
-        retrieval.RetrievalClient(retrieval_config),
-        context.ContextBuilder(min_score=retrieval_config.min_score),
+        retrieval.RetrievalClient(config.rag_retrieval_config),
+        context.ContextBuilder(
+            min_score=config.rag_retrieval_config.min_score,
+            max_context_tokens=config.rag_retrieval_config.max_context_tokens,
+            tokenizer_model=config.rag_retrieval_config.context_tokenizer_model,
+        ),
     )
 
 

@@ -6,11 +6,10 @@ dependencies = [
     "beautifulsoup4",
     "datasketch",
     "pydantic",
+    "pydantic-ai",
     "pydantic_settings",
     "python-dotenv",
-    "pyyaml",
     "qdrant-client",
-    "requests",
     "sentence-transformers",
     "tiktoken",
 ]

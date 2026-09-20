@@ -20,6 +20,7 @@ if typing.TYPE_CHECKING:
     from ai_agent.rag.pipelines.vector_store.stages.validator import VectorStoreValidationMetrics
 
 LOGGER_OBJ: typing.Final = logging.getLogger(__name__)
+CONFIG_SOURCE: typing.Final = "environment"
 
 
 class StagesEnum(enum.Enum):
@@ -58,7 +59,7 @@ class PrepareManifest(ManifestCreatorProtocol):
             "started_at": started_at,
             "created_at": dt.datetime.now(tz=dt.UTC).isoformat(),
             "paths": {
-                "config": str(self.config.paths.config),
+                "config": CONFIG_SOURCE,
                 "input_dir": str(self.config.paths.input),
                 "prepared_path": str(self.config.paths.prepared_jsonl),
             },
@@ -91,7 +92,7 @@ class ChunkingManifest(ManifestCreatorProtocol):
             "started_at": started_at,
             "created_at": dt.datetime.now(tz=dt.UTC).isoformat(),
             "paths": {
-                "config": str(self.config.paths.config),
+                "config": CONFIG_SOURCE,
                 "prepared_path": str(self.config.paths.prepared_jsonl),
                 "chunks_path": str(self.config.paths.chunks_jsonl),
             },
@@ -122,7 +123,7 @@ class EmbeddingManifest(ManifestCreatorProtocol):
             "started_at": started_at,
             "created_at": dt.datetime.now(tz=dt.UTC).isoformat(),
             "paths": {
-                "config": str(self.config.paths.config),
+                "config": CONFIG_SOURCE,
                 "chunks_path": str(self.config.paths.chunks_jsonl),
                 "embeddings_path": str(self.config.paths.embeddings_jsonl),
             },
@@ -152,7 +153,7 @@ class VectorStoreManifest(ManifestCreatorProtocol):
             "started_at": started_at,
             "created_at": dt.datetime.now(tz=dt.UTC).isoformat(),
             "paths": {
-                "config": str(self.config.paths.config),
+                "config": CONFIG_SOURCE,
                 "embeddings_path": str(self.config.paths.embeddings_jsonl),
                 "search_results": str(self.config.paths.search_results_json),
             },

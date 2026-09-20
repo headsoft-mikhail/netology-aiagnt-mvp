@@ -29,32 +29,32 @@ lint:
     uv run ty check .
 
 test: prepare_agent
-    uv run pytest --cov=ai_agent --cov-report=term-missing --cov-report=json:tests/coverage_report.json
+    uv run --env-file .env pytest --cov=ai_agent --cov-report=term-missing --cov-report=json:tests/coverage_report.json
     just clear_runtime
 
 catalog_restore:
-    uv run python -m ai_agent.catalog restore
+    uv run --env-file .env python -m ai_agent.catalog restore
 
 catalog_clear:
-    uv run python -m ai_agent.catalog clear
+    uv run --env-file .env python -m ai_agent.catalog clear
 
 memory_clear:
-    uv run python -m ai_agent.memory clear
+    uv run --env-file .env python -m ai_agent.memory clear
 
 rag_prepare:
-    uv run python -m ai_agent.rag prepare
+    uv run --env-file .env python -m ai_agent.rag prepare
 
 rag_chunk:
-    uv run python -m ai_agent.rag chunk
+    uv run --env-file .env python -m ai_agent.rag chunk
 
 rag_embedding:
-    uv run python -m ai_agent.rag embedding
+    uv run --env-file .env python -m ai_agent.rag embedding
 
 rag_vectorstore:
-    uv run python -m ai_agent.rag vector_store
+    uv run --env-file .env python -m ai_agent.rag vector_store
 
 rag_clear:
-    uv run python -m ai_agent.rag clear
+    uv run --env-file .env python -m ai_agent.rag clear
 
 rag_rebuild: rag_clear rag_prepare rag_chunk rag_embedding rag_vectorstore
 
@@ -62,8 +62,5 @@ prepare_agent: catalog_restore rag_rebuild
 
 run_agent *args:
     uv run --env-file .env python -m ai_agent {{args}}
-
-run_agent_once question *args:
-    uv run --env-file .env python -m ai_agent {{args}} "{{question}}"
 
 clear_runtime: memory_clear catalog_clear rag_clear

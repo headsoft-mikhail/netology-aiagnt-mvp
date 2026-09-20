@@ -3,6 +3,7 @@ import typing
 import pydantic
 
 from ai_agent import contracts
+from ai_agent.config import agent_config
 
 CLARIFICATION_MESSAGE: typing.Final = (
     "Уточните задачу: нужна инструкция, проверка конкретного товара или подбор оборудования?"
@@ -13,7 +14,10 @@ UNSUPPORTED_MESSAGE: typing.Final = "Я могу помочь только с в
 class AgentPlan(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
-    actions: list[contracts.AgentAction] = pydantic.Field(min_length=1, max_length=2)
+    actions: list[contracts.AgentAction] = pydantic.Field(
+        min_length=1,
+        max_length=agent_config.max_actions_per_request,
+    )
     knowledge_query: str | None = pydantic.Field(default=None, min_length=1)
     memory_update: contracts.MemoryUpdate | None = None
     memory_key: contracts.MemoryKey | None = None

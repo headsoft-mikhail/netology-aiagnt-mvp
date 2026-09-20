@@ -2,9 +2,14 @@ import pathlib
 import typing
 
 import pydantic
+import pydantic_settings
 
 
-class MemoryConfig(pydantic.BaseModel):
+class MemoryConfig(pydantic_settings.BaseSettings):
+    model_config = pydantic_settings.SettingsConfigDict(
+        env_prefix="MEMORY_",
+    )
+
     database_path: pathlib.Path = pathlib.Path("src/ai_agent/memory/data/agent_memory.db")
     retrieval_limit: int = pydantic.Field(default=10, gt=0)
 
