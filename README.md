@@ -27,7 +27,8 @@
 ```
 
 Вызовы Tools, их параметры и результаты сохраняются в trace. Итоговый ответ
-может содержать только товары, которые вернул каталог.
+может содержать только товары, которые вернул каталог. RAG-ответ возвращает
+структурированные citations с документом, chunk, разделом и score.
 
 Основные компоненты:
 
@@ -36,6 +37,8 @@
 - `src/ai_agent/handlers/` — обработчики памяти, планирования, RAG, каталога и
   финального ответа;
 - `src/ai_agent/cli.py` — интерактивный CLI;
+- `src/ai_agent/service/` — HTTP API на FastAPI и app-scoped зависимости
+  `modern-di`;
 - `src/ai_agent/llm/` — Pydantic AI-клиент для OpenAI-compatible API и
   типизированные ответы планировщика, фильтров каталога и финального ответа;
 - `src/ai_agent/tools/` — общий протокол, реестр и Tools поиска знаний и товаров;
@@ -63,7 +66,7 @@ cp .env.example .env
 
 В `.env.example` уже заданы все несекретные настройки. Пустым оставлен только
 `LLM_API_KEY`; укажите в локальном `.env` реальный токен. Конфигурация читается
-через `pydantic_settings` с префиксами `LLM_`, `CATALOG_`, `MEMORY_`,
+через `pydantic_settings` с префиксами `LLM_`, `CATALOG_`, `MEMORY_`, `API_`,
 `AGENT_`, `RAG_RETRIEVAL_` и `RAG_PIPELINE_`. Вложенные параметры RAG pipeline
 разделяются двумя подчёркиваниями, например
 `RAG_PIPELINE_CHUNKING__CHUNK_SIZE`.
@@ -90,11 +93,49 @@ just prepare_agent
 пересобираются только явной командой. Запуск проверяет наличие каталога и vector
 store и завершается с понятной ошибкой, если они не подготовлены.
 
+Vector store — сгенерированный runtime-артефакт, а не часть исходного кода.
+`just prepare_agent` строит его из версионируемых документов до запуска CLI или
+API. FastAPI не запускает тяжёлый pipeline в startup: app-scoped зависимость
+`AgentRuntime` использует готовый артефакт, а `/ready` проверяет наличие нужной
+Qdrant-коллекции. При контейнеризации подготовка будет отдельной одноразовой
+командой, а каталог и vector store будут храниться в persistent volume.
+
 Интерактивный режим:
 
 ```bash
 just run_agent
 ```
+
+HTTP API:
+
+```bash
+just run_agent_api
+```
+
+Приложение создаёт один экземпляр агента при старте, поэтому short-term history
+одной `session_id` сохраняется между запросами, пока работает процесс API.
+
+Проверка процесса и готовности runtime-данных:
+
+```bash
+curl http://127.0.0.1:8000/health
+curl http://127.0.0.1:8000/ready
+```
+
+Запрос к агенту:
+
+```bash
+curl -X POST http://127.0.0.1:8000/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"customer-1","session_id":"consultation-1","message":"Как выбрать роутер для тарифа 1 Гбит/с?"}'
+```
+
+`GET /health` проверяет только HTTP-процесс. `GET /ready` возвращает `200`,
+когда агент, каталог и vector store готовы, иначе `503`. `POST /chat`
+возвращает статус и ответ агента, citations, артикулы, Tool calls, использованную
+память и контролируемые ошибки. Внутренние prompts, embeddings и секреты через
+API не возвращаются. Адрес, порт и уровень логов задаются переменными
+`API_HOST`, `API_PORT` и `API_LOG_LEVEL`.
 
 Идентификаторы, логи и структурированный trace можно включить аргументами:
 
@@ -209,7 +250,7 @@ Tools, без повторов и бесконечного агентского 
 Coverage выводится в терминал и сохраняется в
 `tests/coverage_report.json`. Отчёт измеряет только пакет `ai_agent`.
 
-Контрольный запуск `just test`: **61 passed**, покрытие — **83%**.
+Контрольный запуск `just test`: **64 passed**, покрытие — **84%**.
 
 ### GitHub Actions
 
@@ -222,6 +263,7 @@ Workflow `.github/workflows/ci.yml` запускает job `quality` для pull
 | Команда | Назначение |
 | --- | --- |
 | `just prepare_agent` | Восстановить каталог и полностью пересобрать vector store перед запуском. |
+| `just run_agent_api` | Запустить FastAPI на адресе и порту из `API_HOST` и `API_PORT`. |
 | `just catalog_restore` | Заново создать SQLite-каталог из версионируемого CSV-слепка. |
 | `just catalog_clear` | Удалить сгенерированную БД каталога. |
 | `just memory_clear` | Удалить всю локальную долговременную память. |

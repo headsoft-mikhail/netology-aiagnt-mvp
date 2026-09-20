@@ -18,7 +18,7 @@ def create_agent() -> AgentRunner:
     if not catalog_config.database_path.exists():
         raise RuntimeError("Каталог не подготовлен. Выполните `just catalog_restore`.")
 
-    if not rag_retrieval_config.vector_store_path.exists():
+    if not retrieval.is_vector_store_ready(rag_retrieval_config):
         raise RuntimeError("Vector store не подготовлен. Выполните `just rag_rebuild`.")
 
     memory: typing.Final = memory_repository.MemoryRepository(

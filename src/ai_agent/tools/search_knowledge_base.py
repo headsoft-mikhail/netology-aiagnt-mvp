@@ -82,7 +82,9 @@ def _to_fragment(point: ScoredPoint) -> contracts.KnowledgeFragment:
     payload: typing.Final = point.payload or {}
     return contracts.KnowledgeFragment(
         chunk_id=str(payload.get("chunk_id", "")),
+        document_id=str(payload.get("document_id", "")),
         text=str(payload.get("text", "")),
         source=str(payload.get("source", "")),
+        section=str(section) if (section := payload.get("section")) else None,
         score=point.score,
     )

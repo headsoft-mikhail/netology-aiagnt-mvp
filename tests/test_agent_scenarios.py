@@ -29,6 +29,9 @@ ROUTER_PRODUCT_CODE: typing.Final = "RTR-TP-AX23"
 MESH_PRODUCT_CODE: typing.Final = "MSH-KN-BUDDY-2"
 KNOWLEDGE_QUERY: typing.Final = "требования к роутеру для гигабитного тарифа"
 KNOWLEDGE_SOURCE: typing.Final = "router_selection.txt"
+KNOWLEDGE_DOCUMENT_ID: typing.Final = "router-selection-document"
+KNOWLEDGE_CHUNK_ID: typing.Final = "router-selection-chunk"
+KNOWLEDGE_SECTION: typing.Final = "Выбор скорости WAN-порта"
 KNOWLEDGE_TEXT: typing.Final = "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с."
 MESH_KNOWLEDGE_QUERY: typing.Final = "выбор Mesh-системы для большой площади"
 MESH_KNOWLEDGE_SOURCE: typing.Final = "coverage_and_mesh.txt"
@@ -222,9 +225,11 @@ class FakeRetrievalClient:
                 version=1,
                 score=RETRIEVAL_SCORE,
                 payload={
-                    "chunk_id": "router-1",
+                    "chunk_id": KNOWLEDGE_CHUNK_ID,
+                    "document_id": KNOWLEDGE_DOCUMENT_ID,
                     "source": source,
                     "text": text,
+                    "section": KNOWLEDGE_SECTION,
                 },
             )
         ]
@@ -386,6 +391,15 @@ def test_agent_uses_memory_rag_and_catalog_for_router_selection(
     assert [call.tool_name for call in result.tool_calls] == ["search_knowledge_base", "search_products"]
     assert result.product_codes == [ROUTER_PRODUCT_CODE]
     assert result.sources == [KNOWLEDGE_SOURCE]
+    assert result.citations == [
+        contracts.Citation(
+            source=KNOWLEDGE_SOURCE,
+            document_id=KNOWLEDGE_DOCUMENT_ID,
+            chunk_id=KNOWLEDGE_CHUNK_ID,
+            section=KNOWLEDGE_SECTION,
+            score=RETRIEVAL_SCORE,
+        )
+    ]
     assert result.memory_used
     assert TEST_BUDGET in chat_client.calls[1][1]
     assert TEST_EXCLUDED_BRAND in chat_client.calls[1][1]
@@ -1034,7 +1048,39 @@ def test_agent_answers_knowledge_questions_using_rag(
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert result.answer == answer
     assert result.sources == [KNOWLEDGE_SOURCE]
+    assert result.citations[0].document_id == KNOWLEDGE_DOCUMENT_ID
+    assert result.citations[0].chunk_id == KNOWLEDGE_CHUNK_ID
     assert [call.tool_name for call in result.tool_calls] == [search_knowledge_base.SEARCH_KNOWLEDGE_BASE_TOOL_NAME]
+
+
+def test_agent_does_not_ask_llm_to_answer_without_rag_context(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+) -> None:
+    memory, catalog = repositories
+    chat_client: typing.Final = ScriptedChatClient(
+        [
+            {
+                "actions": ["search_knowledge_base"],
+                "knowledge_query": "несуществующая инструкция",
+            }
+        ]
+    )
+    runner: typing.Final = agent.AgentRunner(
+        memory=memory,
+        llm=service.LLMService(chat_client=chat_client),
+        tool_registry=create_tool_registry(catalog, EmptyRetrievalClient()),
+    )
+
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        "Как выполнить неизвестную процедуру?",
+        session_id=TEST_SESSION_ID,
+    )
+
+    assert result.status is contracts.AgentRunStatus.NOT_FOUND
+    assert result.answer == search_knowledge_base.NO_KNOWLEDGE_RESULTS_MESSAGE
+    assert result.citations == []
+    assert len(chat_client.calls) == 1
 
 
 @pytest.mark.parametrize(

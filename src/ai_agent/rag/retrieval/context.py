@@ -56,10 +56,13 @@ class ContextBuilder:
     @staticmethod
     def _render_chunk(point: ScoredPoint, position: int) -> str:
         payload: typing.Final = point.payload or {}
-        return "\n".join(
-            [
-                f"[Фрагмент {position}]",
-                f"Источник: {payload.get('source', '')}",
-                f"Текст: {payload.get('text', '')}",
-            ]
-        )
+        fields: typing.Final = [
+            f"[Фрагмент {position}]",
+            f"Источник: {payload.get('source', '')}",
+            f"Документ: {payload.get('document_id', '')}",
+            f"Chunk: {payload.get('chunk_id', '')}",
+        ]
+        if section := payload.get("section"):
+            fields.append(f"Раздел: {section}")
+        fields.append(f"Текст: {payload.get('text', '')}")
+        return "\n".join(fields)

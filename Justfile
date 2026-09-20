@@ -63,4 +63,7 @@ prepare_agent: catalog_restore rag_rebuild
 run_agent *args:
     uv run --env-file .env python -m ai_agent {{args}}
 
+run_agent_api:
+    uv run --env-file .env python -m ai_agent.service
+
 clear_runtime: memory_clear catalog_clear rag_clear

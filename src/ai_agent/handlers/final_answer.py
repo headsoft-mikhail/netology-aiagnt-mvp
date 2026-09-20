@@ -35,6 +35,19 @@ class FinalAnswerHandler:
     llm: LLMService
 
     def handle(self, context: runtime.RunContext) -> contracts.AgentResponse:
+        status: typing.Final = self._resolve_status(context)
+        if status is contracts.AgentRunStatus.NOT_FOUND and self._is_knowledge_only_request(context):
+            knowledge_result: typing.Final = typing.cast(
+                contracts.KnowledgeBaseSearchResult,
+                context.agent_state.knowledge_result,
+            )
+            message: typing.Final = (
+                knowledge_result.error.message
+                if knowledge_result.error is not None
+                else "В базе знаний не найдено релевантных материалов."
+            )
+            return context.response(status, message)
+
         context.agent_state.assembled_context = json.dumps(
             {
                 "memory": [fact.model_dump(mode="json") for fact in context.agent_state.relevant_memory],
@@ -80,8 +93,11 @@ class FinalAnswerHandler:
             duration_ms=helpers.duration_ms(started_at),
         )
 
-        status: typing.Final = self._resolve_status(context)
         return context.response(status, draft.answer, product_codes=draft.product_codes)
+
+    @staticmethod
+    def _is_knowledge_only_request(context: runtime.RunContext) -> bool:
+        return set(context.agent_state.selected_actions) == {contracts.AgentAction.SEARCH_KNOWLEDGE_BASE}
 
     @staticmethod
     def _validate_product_codes(

@@ -43,13 +43,15 @@
             "status": "ok",
             "fragments": [
               {
-                "chunk_id": "router-1",
+                "chunk_id": "router-selection-chunk",
+                "document_id": "router-selection-document",
                 "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
                 "source": "router_selection.txt",
+                "section": "Выбор скорости WAN-порта",
                 "score": 0.95
               }
             ],
-            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nДокумент: router-selection-document\nChunk: router-selection-chunk\nРаздел: Выбор скорости WAN-порта\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
             "sources": [
               "router_selection.txt"
             ],
@@ -183,13 +185,15 @@
             "status": "ok",
             "fragments": [
               {
-                "chunk_id": "router-1",
+                "chunk_id": "router-selection-chunk",
+                "document_id": "router-selection-document",
                 "text": "Для большой площади используйте Mesh-систему из нескольких модулей.",
                 "source": "coverage_and_mesh.txt",
+                "section": "Выбор скорости WAN-порта",
                 "score": 0.95
               }
             ],
-            "context": "[Фрагмент 1]\nИсточник: coverage_and_mesh.txt\nТекст: Для большой площади используйте Mesh-систему из нескольких модулей.",
+            "context": "[Фрагмент 1]\nИсточник: coverage_and_mesh.txt\nДокумент: router-selection-document\nChunk: router-selection-chunk\nРаздел: Выбор скорости WAN-порта\nТекст: Для большой площади используйте Mesh-систему из нескольких модулей.",
             "sources": [
               "coverage_and_mesh.txt"
             ],
@@ -318,13 +322,15 @@
             "status": "ok",
             "fragments": [
               {
-                "chunk_id": "router-1",
+                "chunk_id": "router-selection-chunk",
+                "document_id": "router-selection-document",
                 "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
                 "source": "router_selection.txt",
+                "section": "Выбор скорости WAN-порта",
                 "score": 0.95
               }
             ],
-            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nДокумент: router-selection-document\nChunk: router-selection-chunk\nРаздел: Выбор скорости WAN-порта\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
             "sources": [
               "router_selection.txt"
             ],
@@ -367,13 +373,15 @@
             "status": "ok",
             "fragments": [
               {
-                "chunk_id": "router-1",
+                "chunk_id": "router-selection-chunk",
+                "document_id": "router-selection-document",
                 "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
                 "source": "router_selection.txt",
+                "section": "Выбор скорости WAN-порта",
                 "score": 0.95
               }
             ],
-            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nДокумент: router-selection-document\nChunk: router-selection-chunk\nРаздел: Выбор скорости WAN-порта\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
             "sources": [
               "router_selection.txt"
             ],
@@ -1231,13 +1239,15 @@
             "status": "ok",
             "fragments": [
               {
-                "chunk_id": "router-1",
+                "chunk_id": "router-selection-chunk",
+                "document_id": "router-selection-document",
                 "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
                 "source": "router_selection.txt",
+                "section": "Выбор скорости WAN-порта",
                 "score": 0.95
               }
             ],
-            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nДокумент: router-selection-document\nChunk: router-selection-chunk\nРаздел: Выбор скорости WAN-порта\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
             "sources": [
               "router_selection.txt"
             ],
@@ -1805,13 +1815,15 @@
             "status": "ok",
             "fragments": [
               {
-                "chunk_id": "router-1",
+                "chunk_id": "router-selection-chunk",
+                "document_id": "router-selection-document",
                 "text": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
                 "source": "router_selection.txt",
+                "section": "Выбор скорости WAN-порта",
                 "score": 0.95
               }
             ],
-            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
+            "context": "[Фрагмент 1]\nИсточник: router_selection.txt\nДокумент: router-selection-document\nChunk: router-selection-chunk\nРаздел: Выбор скорости WAN-порта\nТекст: Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
             "sources": [
               "router_selection.txt"
             ],

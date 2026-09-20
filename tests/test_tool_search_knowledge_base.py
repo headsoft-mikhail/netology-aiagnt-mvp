@@ -8,6 +8,9 @@ from ai_agent.tools import search_knowledge_base
 
 QUERY: typing.Final = "Как выбрать роутер?"
 SOURCE: typing.Final = "router_selection.txt"
+DOCUMENT_ID: typing.Final = "router-selection-document"
+CHUNK_ID: typing.Final = "router-selection-chunk"
+SECTION: typing.Final = "Выбор скорости WAN-порта"
 MAX_CONTEXT_TOKENS: typing.Final = 1800
 TOKENIZER_MODEL: typing.Final = "text-embedding-3-small"
 
@@ -40,9 +43,11 @@ def create_point(score: float) -> qdrant_client.models.ScoredPoint:
         version=1,
         score=score,
         payload={
-            "chunk_id": "chunk-1",
+            "chunk_id": CHUNK_ID,
+            "document_id": DOCUMENT_ID,
             "text": "Для гигабитного тарифа нужен гигабитный WAN-порт.",
             "source": SOURCE,
+            "section": SECTION,
         },
     )
 
@@ -57,6 +62,8 @@ def test_search_knowledge_base_returns_context_and_sources() -> None:
     assert result.status is contracts.ToolStatus.OK
     assert result.sources == [SOURCE]
     assert result.fragments[0].score == 0.9
+    assert result.fragments[0].document_id == DOCUMENT_ID
+    assert result.fragments[0].section == SECTION
     assert "гигабитный WAN-порт" in result.context
 
 
