@@ -50,6 +50,8 @@ LLM_COMPONENT_FIELD: typing.Final = 'component="llm"'
 INVALID_LLM_ERROR_CODE_FIELD: typing.Final = 'error_code="invalid_llm_response"'
 INVALID_LLM_ERROR_TYPE_FIELD: typing.Final = 'error_type="InvalidLLMResponseError"'
 MEMORY_DATABASE_ERROR: typing.Final = "simulated memory database failure"
+UNKNOWN_KNOWLEDGE_QUERY: typing.Final = "несуществующая инструкция"
+RETRIEVAL_ERROR_MESSAGE: typing.Final = "simulated retrieval failure"
 KNOWLEDGE_CASES: typing.Final = (
     pytest.param(
         "TC-RAG-001",
@@ -239,6 +241,12 @@ class EmptyRetrievalClient:
     def top_k(self, query: str) -> list[qdrant_client.models.ScoredPoint]:
         del query
         return []
+
+
+class UnavailableRetrievalClient:
+    def top_k(self, query: str) -> typing.NoReturn:
+        del query
+        raise RuntimeError(RETRIEVAL_ERROR_MESSAGE)
 
 
 class FailOnceChatClient:
@@ -1053,6 +1061,7 @@ def test_agent_answers_knowledge_questions_using_rag(
     assert [call.tool_name for call in result.tool_calls] == [search_knowledge_base.SEARCH_KNOWLEDGE_BASE_TOOL_NAME]
 
 
+@pytest.mark.report_case("TC-RAG-NOT-FOUND-001")
 def test_agent_does_not_ask_llm_to_answer_without_rag_context(
     repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
 ) -> None:
@@ -1061,7 +1070,7 @@ def test_agent_does_not_ask_llm_to_answer_without_rag_context(
         [
             {
                 "actions": ["search_knowledge_base"],
-                "knowledge_query": "несуществующая инструкция",
+                "knowledge_query": UNKNOWN_KNOWLEDGE_QUERY,
             }
         ]
     )
@@ -1073,13 +1082,49 @@ def test_agent_does_not_ask_llm_to_answer_without_rag_context(
 
     result: typing.Final = runner.run(
         TEST_USER_ID,
-        "Как выполнить неизвестную процедуру?",
+        reporting.request("TC-RAG-NOT-FOUND-001"),
         session_id=TEST_SESSION_ID,
     )
+    reporting.record_agent_response("TC-RAG-NOT-FOUND-001", result)
 
     assert result.status is contracts.AgentRunStatus.NOT_FOUND
     assert result.answer == search_knowledge_base.NO_KNOWLEDGE_RESULTS_MESSAGE
     assert result.citations == []
+    assert result.tool_calls[0].status is contracts.ToolStatus.NO_RESULTS
+    assert len(chat_client.calls) == 1
+
+
+@pytest.mark.report_case("TC-RAG-ERROR-001")
+def test_agent_handles_unavailable_rag_without_retry(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+) -> None:
+    memory, catalog = repositories
+    chat_client: typing.Final = ScriptedChatClient(
+        [
+            {
+                "actions": ["search_knowledge_base"],
+                "knowledge_query": KNOWLEDGE_QUERY,
+            }
+        ]
+    )
+    runner: typing.Final = agent.AgentRunner(
+        memory=memory,
+        llm=service.LLMService(chat_client=chat_client),
+        tool_registry=create_tool_registry(catalog, UnavailableRetrievalClient()),
+    )
+
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        reporting.request("TC-RAG-ERROR-001"),
+        session_id=TEST_SESSION_ID,
+    )
+    reporting.record_agent_response("TC-RAG-ERROR-001", result)
+
+    assert result.status is contracts.AgentRunStatus.FAILED
+    assert result.citations == []
+    assert len(result.tool_calls) == 1
+    assert result.tool_calls[0].status is contracts.ToolStatus.ERROR
+    assert result.errors[0].code is contracts.ErrorCode.KNOWLEDGE_BASE_UNAVAILABLE
     assert len(chat_client.calls) == 1
 
 

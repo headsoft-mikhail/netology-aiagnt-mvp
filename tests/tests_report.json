@@ -1,13 +1,15 @@
 {
   "agent_name": "Network Equipment Store Consultant",
   "required_test_ids": [
-    "TC-MVP-001",
-    "TC-MVP-002"
+    "TC-RAG-001",
+    "TC-CATALOG-001",
+    "TC-MEMORY-007",
+    "TC-RAG-NOT-FOUND-001",
+    "TC-RAG-ERROR-001"
   ],
   "tests": [
     {
       "id": "TC-MVP-001",
-      "required": true,
       "type": "main",
       "user_id": "customer-router",
       "session_id": "selection-router",
@@ -18,6 +20,15 @@
         "answer": "TP-Link Archer AX23 (RTR-TP-AX23) подходит и стоит 6490 рублей.",
         "sources": [
           "router_selection.txt"
+        ],
+        "citations": [
+          {
+            "source": "router_selection.txt",
+            "document_id": "router-selection-document",
+            "chunk_id": "router-selection-chunk",
+            "section": "Выбор скорости WAN-порта",
+            "score": 0.95
+          }
         ],
         "product_codes": [
           "RTR-TP-AX23"
@@ -164,6 +175,15 @@
         "sources": [
           "coverage_and_mesh.txt"
         ],
+        "citations": [
+          {
+            "source": "coverage_and_mesh.txt",
+            "document_id": "router-selection-document",
+            "chunk_id": "router-selection-chunk",
+            "section": "Выбор скорости WAN-порта",
+            "score": 0.95
+          }
+        ],
         "product_codes": [
           "MSH-KN-BUDDY-2"
         ],
@@ -292,6 +312,7 @@
     },
     {
       "id": "TC-RAG-001",
+      "required": true,
       "type": "alternative",
       "user_id": "customer-rag-1",
       "session_id": "knowledge-1",
@@ -302,6 +323,15 @@
         "answer": "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с.",
         "sources": [
           "router_selection.txt"
+        ],
+        "citations": [
+          {
+            "source": "router_selection.txt",
+            "document_id": "router-selection-document",
+            "chunk_id": "router-selection-chunk",
+            "section": "Выбор скорости WAN-порта",
+            "score": 0.95
+          }
         ],
         "product_codes": [],
         "memory": {
@@ -354,6 +384,15 @@
         "sources": [
           "router_selection.txt"
         ],
+        "citations": [
+          {
+            "source": "router_selection.txt",
+            "document_id": "router-selection-document",
+            "chunk_id": "router-selection-chunk",
+            "section": "Выбор скорости WAN-порта",
+            "score": 0.95
+          }
+        ],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -394,6 +433,7 @@
     },
     {
       "id": "TC-CATALOG-001",
+      "required": true,
       "type": "alternative",
       "user_id": "customer-catalog-1",
       "session_id": "catalog-1",
@@ -403,6 +443,7 @@
         "status": "completed",
         "answer": "Подходящий товар: ADP-DL-DWA-X1850.",
         "sources": [],
+        "citations": [],
         "product_codes": [
           "ADP-DL-DWA-X1850"
         ],
@@ -493,6 +534,7 @@
         "status": "completed",
         "answer": "Подходящий товар: AP-UB-U7P.",
         "sources": [],
+        "citations": [],
         "product_codes": [
           "AP-UB-U7P"
         ],
@@ -563,6 +605,7 @@
         "status": "completed",
         "answer": "Подходящий товар: SWT-TP-SG108PE.",
         "sources": [],
+        "citations": [],
         "product_codes": [
           "SWT-TP-SG108PE"
         ],
@@ -654,6 +697,7 @@
         "status": "needs_input",
         "answer": "Уточните категорию и бюджет.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -676,6 +720,7 @@
         "status": "needs_input",
         "answer": "Уточните площадь и текущую проблему.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -698,6 +743,7 @@
         "status": "completed",
         "answer": "Я консультирую только по сетевому оборудованию.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -720,6 +766,7 @@
         "status": "completed",
         "answer": "Этот вопрос вне тематики магазина.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -733,7 +780,6 @@
     },
     {
       "id": "TC-MVP-002",
-      "required": true,
       "type": "error",
       "user_id": "customer-empty-1",
       "session_id": "empty-1",
@@ -743,6 +789,7 @@
         "status": "not_found",
         "answer": "В заданном бюджете роутеров нет.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -798,6 +845,7 @@
         "status": "not_found",
         "answer": "В заданном бюджете Mesh-систем нет.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -852,6 +900,7 @@
         "status": "not_found",
         "answer": "В заданном бюджете точек доступа нет.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -905,6 +954,7 @@
         "status": "failed",
         "answer": "Не удалось получить корректный ответ языковой модели.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -932,6 +982,7 @@
         "status": "failed",
         "answer": "Не удалось получить корректный ответ языковой модели.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -959,6 +1010,7 @@
         "status": "failed",
         "answer": "Не удалось получить корректный ответ языковой модели.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -1074,6 +1126,7 @@
         "status": "failed",
         "answer": "Не удалось выполнить поиск по каталогу товаров.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -1134,6 +1187,7 @@
         "status": "failed",
         "answer": "Не удалось получить корректный ответ языковой модели.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -1161,6 +1215,7 @@
         "status": "completed",
         "answer": "Предпочтение сохранено.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [
@@ -1187,6 +1242,7 @@
         "status": "completed",
         "answer": "Предпочтение сохранено.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [
@@ -1214,6 +1270,15 @@
         "answer": "TP-Link Archer AX23 (RTR-TP-AX23) подходит и стоит 6490 рублей.",
         "sources": [
           "router_selection.txt"
+        ],
+        "citations": [
+          {
+            "source": "router_selection.txt",
+            "document_id": "router-selection-document",
+            "chunk_id": "router-selection-chunk",
+            "section": "Выбор скорости WAN-порта",
+            "score": 0.95
+          }
         ],
         "product_codes": [
           "RTR-TP-AX23"
@@ -1358,6 +1423,7 @@
         "status": "completed",
         "answer": "Предпочтение удалено.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [
@@ -1385,6 +1451,7 @@
         "status": "completed",
         "answer": "Все предпочтения пользователя удалены.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [
@@ -1430,6 +1497,7 @@
         "status": "completed",
         "answer": "Все предпочтения пользователя удалены.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [
@@ -1470,6 +1538,7 @@
         "status": "failed",
         "answer": "Указанная сессия принадлежит другому пользователю.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -1488,6 +1557,7 @@
     },
     {
       "id": "TC-MEMORY-007",
+      "required": true,
       "type": "memory",
       "user_id": "customer-memory-dialogue",
       "session_id": "memory-dialogue",
@@ -1497,6 +1567,7 @@
         "status": "completed",
         "answer": "С учётом бюджета подходит RTR-TP-AX23.",
         "sources": [],
+        "citations": [],
         "product_codes": [
           "RTR-TP-AX23"
         ],
@@ -1613,6 +1684,7 @@
         "status": "needs_input",
         "answer": "Не удалось сохранить значение. Для бюджета, площади, количества устройств и скорости тарифа укажите положительное целое число цифрами.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -1637,6 +1709,7 @@
         "status": "needs_input",
         "answer": "Не удалось сохранить значение. Для бюджета, площади, количества устройств и скорости тарифа укажите положительное целое число цифрами.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -1661,6 +1734,7 @@
         "status": "completed",
         "answer": "В каталоге найден RTR-TP-AX23.",
         "sources": [],
+        "citations": [],
         "product_codes": [
           "RTR-TP-AX23"
         ],
@@ -1796,6 +1870,15 @@
         "sources": [
           "router_selection.txt"
         ],
+        "citations": [
+          {
+            "source": "router_selection.txt",
+            "document_id": "router-selection-document",
+            "chunk_id": "router-selection-chunk",
+            "section": "Выбор скорости WAN-порта",
+            "score": 0.95
+          }
+        ],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -1893,6 +1976,7 @@
         "status": "failed",
         "answer": "Не удалось обратиться к памяти пользователя.",
         "sources": [],
+        "citations": [],
         "product_codes": [],
         "memory": {
           "used_fact_ids": [],
@@ -1907,6 +1991,103 @@
         ]
       },
       "tool_calls": [],
+      "passed": true
+    },
+    {
+      "id": "TC-RAG-NOT-FOUND-001",
+      "required": true,
+      "type": "error",
+      "user_id": "customer-rag-empty",
+      "session_id": "rag-empty",
+      "request": "Как выполнить неизвестную процедуру?",
+      "expected": "Пустой RAG возвращает not_found без обращения к LLM за неподтверждённым ответом",
+      "actual": {
+        "status": "not_found",
+        "answer": "В базе знаний не найдено релевантных материалов.",
+        "sources": [],
+        "citations": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": []
+      },
+      "tool_calls": [
+        {
+          "name": "search_knowledge_base",
+          "status": "no_results",
+          "input": {
+            "query": "несуществующая инструкция"
+          },
+          "output": {
+            "status": "no_results",
+            "fragments": [],
+            "context": "",
+            "sources": [],
+            "error": {
+              "code": "no_results",
+              "message": "В базе знаний не найдено релевантных материалов."
+            }
+          },
+          "error": {
+            "code": "no_results",
+            "message": "В базе знаний не найдено релевантных материалов."
+          }
+        }
+      ],
+      "passed": true
+    },
+    {
+      "id": "TC-RAG-ERROR-001",
+      "required": true,
+      "type": "error",
+      "user_id": "customer-rag-error",
+      "session_id": "rag-error",
+      "request": "Найди инструкцию при недоступной базе знаний",
+      "expected": "Ошибка retrieval контролируемо возвращается без повторного Tool-цикла и аварийного завершения",
+      "actual": {
+        "status": "failed",
+        "answer": "Не удалось выполнить поиск по базе знаний.",
+        "sources": [],
+        "citations": [],
+        "product_codes": [],
+        "memory": {
+          "used_fact_ids": [],
+          "operation": null,
+          "keys": []
+        },
+        "errors": [
+          {
+            "code": "knowledge_base_unavailable",
+            "message": "Не удалось выполнить поиск по базе знаний."
+          }
+        ]
+      },
+      "tool_calls": [
+        {
+          "name": "search_knowledge_base",
+          "status": "error",
+          "input": {
+            "query": "требования к роутеру для гигабитного тарифа"
+          },
+          "output": {
+            "status": "error",
+            "fragments": [],
+            "context": "",
+            "sources": [],
+            "error": {
+              "code": "knowledge_base_unavailable",
+              "message": "Не удалось выполнить поиск по базе знаний."
+            }
+          },
+          "error": {
+            "code": "knowledge_base_unavailable",
+            "message": "Не удалось выполнить поиск по базе знаний."
+          }
+        }
+      ],
       "passed": true
     }
   ]
