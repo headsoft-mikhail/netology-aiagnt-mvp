@@ -97,8 +97,7 @@ Vector store — сгенерированный runtime-артефакт, а н�
 `just prepare_agent` строит его из версионируемых документов до запуска CLI или
 API. FastAPI не запускает тяжёлый pipeline в startup: app-scoped зависимость
 `AgentRuntime` использует готовый артефакт, а `/ready` проверяет наличие нужной
-Qdrant-коллекции. При контейнеризации подготовка будет отдельной одноразовой
-командой, а каталог и vector store будут храниться в persistent volume.
+Qdrant-коллекции.
 
 Интерактивный режим:
 
@@ -118,14 +117,17 @@ just run_agent_api
 Проверка процесса и готовности runtime-данных:
 
 ```bash
-curl http://127.0.0.1:8000/health
-curl http://127.0.0.1:8000/ready
+set -a
+source .env
+set +a
+curl "http://127.0.0.1:${API_PORT}/health"
+curl "http://127.0.0.1:${API_PORT}/ready"
 ```
 
 Запрос к агенту:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/chat \
+curl -X POST "http://127.0.0.1:${API_PORT}/chat" \
   -H 'Content-Type: application/json' \
   -d '{"user_id":"customer-1","session_id":"consultation-1","message":"Как выбрать роутер для тарифа 1 Гбит/с?"}'
 ```
@@ -136,6 +138,51 @@ curl -X POST http://127.0.0.1:8000/chat \
 память и контролируемые ошибки. Внутренние prompts, embeddings и секреты через
 API не возвращаются. Адрес, порт и уровень логов задаются переменными
 `API_HOST`, `API_PORT` и `API_LOG_LEVEL`.
+
+## Запуск в Docker
+
+Docker Compose не требуется: API и embedded Qdrant работают в одном
+контейнере. Имя образа и named volume задают `DOCKER_IMAGE_NAME` и
+`DOCKER_RUNTIME_VOLUME_NAME` из `.env`. В volume хранятся каталог,
+долговременная память, vector store, промежуточные данные RAG и кеш
+embedding-модели.
+
+Сначала соберите образ и один раз подготовьте runtime-данные:
+
+```bash
+just docker_build
+just docker_prepare
+```
+
+`docker_prepare` восстанавливает SQLite-каталог из CSV и с нуля строит vector
+store. При последующих запусках эту команду нужно повторять только после
+изменения CSV-каталога, документов базы знаний или настроек RAG pipeline.
+
+Запустите HTTP API:
+
+```bash
+just docker_run_agent_api
+```
+
+Команда передаёт все настройки из локального `.env`, публикует порт `API_PORT`
+и подключает тот же persistent volume к `/app/runtime`. Пути к каталогу,
+памяти, RAG-артефактам и кешу embedding-модели в `.env` относительны каталога
+проекта, поэтому одинаково работают локально и внутри образа. Каталог
+`runtime/` содержит только генерируемые данные и не добавляется в Git. Обычный
+запуск не вычисляет embeddings заново. Загрузите значения `.env` в текущую
+оболочку и проверьте сервис:
+
+```bash
+set -a
+source .env
+set +a
+curl "http://127.0.0.1:${API_PORT}/health"
+curl "http://127.0.0.1:${API_PORT}/ready"
+```
+
+В образе настроен Docker healthcheck по `/ready`. Если volume ещё не
+подготовлен, процесс API запустится, но контейнер получит состояние `unhealthy`,
+а `/ready` вернёт `503`.
 
 Идентификаторы, логи и структурированный trace можно включить аргументами:
 
@@ -264,6 +311,9 @@ Workflow `.github/workflows/ci.yml` запускает job `quality` для pull
 | --- | --- |
 | `just prepare_agent` | Восстановить каталог и полностью пересобрать vector store перед запуском. |
 | `just run_agent_api` | Запустить FastAPI на адресе и порту из `API_HOST` и `API_PORT`. |
+| `just docker_build` | Собрать локальный Docker-образ приложения. |
+| `just docker_prepare` | Восстановить каталог и построить RAG-данные в persistent volume. |
+| `just docker_run_agent_api` | Запустить HTTP API из образа с подготовленным persistent volume. |
 | `just catalog_restore` | Заново создать SQLite-каталог из версионируемого CSV-слепка. |
 | `just catalog_clear` | Удалить сгенерированную БД каталога. |
 | `just memory_clear` | Удалить всю локальную долговременную память. |

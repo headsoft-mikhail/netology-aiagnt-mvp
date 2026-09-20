@@ -9,6 +9,7 @@ __pycache__/
 .DS_Store
 
 .env
+runtime/
 
 src/ai_agent/rag/knowledge_base/prepared/
 src/ai_agent/rag/knowledge_base/chunks/
