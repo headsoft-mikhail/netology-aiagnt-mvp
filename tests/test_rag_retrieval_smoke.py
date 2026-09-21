@@ -12,10 +12,13 @@ IRRELEVANT_QUERY: typing.Final = "Сколько стоит страховани
 
 @pytest.fixture(scope="module")
 def knowledge_search_dependencies() -> tuple[retrieval.RetrievalClient, context.ContextBuilder]:
-    retrieval_config: typing.Final = config.load_retrieval_config()
     return (
-        retrieval.RetrievalClient(retrieval_config),
-        context.ContextBuilder(min_score=retrieval_config.min_score),
+        retrieval.RetrievalClient(config.rag_retrieval_config),
+        context.ContextBuilder(
+            min_score=config.rag_retrieval_config.min_score,
+            max_context_tokens=config.rag_retrieval_config.max_context_tokens,
+            tokenizer_model=config.rag_retrieval_config.context_tokenizer_model,
+        ),
     )
 
 
@@ -23,6 +26,8 @@ def test_retrieval_finds_router_requirements(
     knowledge_search_dependencies: tuple[retrieval.RetrievalClient, context.ContextBuilder],
 ) -> None:
     retrieval_client, context_builder = knowledge_search_dependencies
+
+    assert retrieval.is_vector_store_ready(config.rag_retrieval_config)
 
     result: typing.Final = search_knowledge_base.search_knowledge_base(
         models.KnowledgeSearchInput(query=RELEVANT_QUERY),
@@ -33,6 +38,8 @@ def test_retrieval_finds_router_requirements(
     assert result.status is contracts.ToolStatus.OK
     assert "1 Гбит/с" in result.context
     assert any("router_selection.txt" in source for source in result.sources)
+    assert all(fragment.document_id for fragment in result.fragments)
+    assert all(fragment.chunk_id for fragment in result.fragments)
 
 
 def test_retrieval_rejects_irrelevant_insurance_query(

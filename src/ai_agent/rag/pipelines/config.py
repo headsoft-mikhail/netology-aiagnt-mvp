@@ -2,17 +2,16 @@ import typing
 from pathlib import Path
 
 import pydantic
+import pydantic_settings
 import tiktoken
-import yaml
 
 
 class PathsConfig(pydantic.BaseModel):
-    config: Path | None = None
-    input: Path
-    prepared: Path
-    chunks: Path
-    embeddings: Path
-    vector_store: Path
+    input: Path = Path("src/ai_agent/rag/knowledge_base/raw")
+    prepared: Path = Path("src/ai_agent/rag/knowledge_base/prepared")
+    chunks: Path = Path("src/ai_agent/rag/knowledge_base/chunks")
+    embeddings: Path = Path("src/ai_agent/rag/knowledge_base/embeddings")
+    vector_store: Path = Path("src/ai_agent/rag/knowledge_base/vector_store")
 
     @property
     def prepared_jsonl(self) -> Path:
@@ -44,7 +43,7 @@ class PathsConfig(pydantic.BaseModel):
 
 
 class ParsingConfig(pydantic.BaseModel):
-    supported_formats: list[str]
+    supported_formats: list[str] = pydantic.Field(default_factory=lambda: ["txt", "json", "html"])
 
 
 class CleaningConfig(pydantic.BaseModel):
@@ -58,15 +57,15 @@ class NormalizationConfig(pydantic.BaseModel):
 class DeduplicationConfig(pydantic.BaseModel):
     exact: bool = True
     near_duplicate: bool = True
-    similarity_threshold: float
-    permutations_number: int
+    similarity_threshold: float = pydantic.Field(default=0.65, ge=0, le=1)
+    permutations_number: int = pydantic.Field(default=128, gt=0)
 
 
 class ChunkingConfig(pydantic.BaseModel):
-    strategy: typing.Literal["sentence", "paragraph", "token"]
-    chunk_size: int = pydantic.Field(gt=0)
-    chunk_overlap: int = pydantic.Field(ge=0)
-    tokenizer_model: str
+    strategy: typing.Literal["sentence", "paragraph", "token"] = "sentence"
+    chunk_size: int = pydantic.Field(default=220, gt=0)
+    chunk_overlap: int = pydantic.Field(default=50, ge=0)
+    tokenizer_model: str = "text-embedding-3-small"
 
     @pydantic.model_validator(mode="after")
     def validate_overlap(self) -> typing.Self:
@@ -84,33 +83,30 @@ class EmbeddingConfig(pydantic.BaseModel):
 
 
 class VectorStoreConfig(pydantic.BaseModel):
-    collection_name: str
-    vectors_dimensions: int
-    store_type: str
-    distance: typing.Literal["cosine", "dot", "euclid", "manhattan"]
-    upload_batch_size: int = pydantic.Field(gt=0)
-    search_top_k: int = pydantic.Field(gt=0)
-    search_test_queries: int = pydantic.Field(gt=0)
+    collection_name: str = "store_knowledge"
+    vectors_dimensions: int = pydantic.Field(default=768, gt=0)
+    store_type: str = "qdrant"
+    distance: typing.Literal["cosine", "dot", "euclid", "manhattan"] = "cosine"
+    upload_batch_size: int = pydantic.Field(default=100, gt=0)
+    search_top_k: int = pydantic.Field(default=5, gt=0)
+    search_test_queries: int = pydantic.Field(default=3, gt=0)
     recreate_collection: bool = True
 
 
-class PipelineConfig(pydantic.BaseModel):
-    paths: PathsConfig
-    parsing: ParsingConfig
-    cleaning: CleaningConfig
-    normalization: NormalizationConfig
-    deduplication: DeduplicationConfig
-    chunking: ChunkingConfig
-    embedding: EmbeddingConfig
-    vector_store: VectorStoreConfig
+class PipelineConfig(pydantic_settings.BaseSettings):
+    model_config = pydantic_settings.SettingsConfigDict(
+        env_prefix="RAG_PIPELINE_",
+        env_nested_delimiter="__",
+    )
+
+    paths: PathsConfig = pydantic.Field(default_factory=PathsConfig)
+    parsing: ParsingConfig = pydantic.Field(default_factory=ParsingConfig)
+    cleaning: CleaningConfig = pydantic.Field(default_factory=CleaningConfig)
+    normalization: NormalizationConfig = pydantic.Field(default_factory=NormalizationConfig)
+    deduplication: DeduplicationConfig = pydantic.Field(default_factory=DeduplicationConfig)
+    chunking: ChunkingConfig = pydantic.Field(default_factory=ChunkingConfig)
+    embedding: EmbeddingConfig = pydantic.Field(default_factory=EmbeddingConfig)
+    vector_store: VectorStoreConfig = pydantic.Field(default_factory=VectorStoreConfig)
 
 
-def load_pipeline_config() -> PipelineConfig:
-    config_path: typing.Final = Path(__file__).with_name("pipeline.yaml")
-    with config_path.open("r", encoding="utf-8") as file:
-        data: typing.Final = yaml.safe_load(file)
-
-    pipeline_config: typing.Final = PipelineConfig.model_validate(data)
-    pipeline_config.paths.config = config_path
-
-    return pipeline_config
+rag_pipeline_config: typing.Final = PipelineConfig()

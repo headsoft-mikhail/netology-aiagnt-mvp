@@ -5,14 +5,16 @@ requires-python = ">=3.14.5"
 dependencies = [
     "beautifulsoup4",
     "datasketch",
+    "fastapi",
+    "modern-di-fastapi",
     "pydantic",
+    "pydantic-ai",
     "pydantic_settings",
     "python-dotenv",
-    "pyyaml",
     "qdrant-client",
-    "requests",
     "sentence-transformers",
     "tiktoken",
+    "uvicorn",
 ]
 
 [dependency-groups]
@@ -20,6 +22,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "faker",
+    "httpx",
     "ruff",
     "ty",
     "auto-typing-final",

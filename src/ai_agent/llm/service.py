@@ -66,12 +66,8 @@ class LLMService:
         system_prompt: str,
         user_prompt: str,
     ) -> ResponseModel:
-        raw_response: typing.Final = self.chat_client.complete(
+        return self.chat_client.complete(
             system_prompt,
             user_prompt,
-            json_mode=True,
+            output_type=model_type,
         )
-        try:
-            return model_type.model_validate_json(raw_response)
-        except pydantic.ValidationError as error:
-            raise client.InvalidLLMResponseError(f"LLM returned invalid {model_type.__name__}.") from error

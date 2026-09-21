@@ -94,8 +94,20 @@ class KnowledgeFragment(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(str_strip_whitespace=True)
 
     chunk_id: str = pydantic.Field(min_length=1)
+    document_id: str = pydantic.Field(min_length=1)
     text: str = pydantic.Field(min_length=1)
     source: str = pydantic.Field(min_length=1)
+    section: str | None = None
+    score: float = pydantic.Field(ge=0, le=1)
+
+
+class Citation(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(str_strip_whitespace=True)
+
+    source: str = pydantic.Field(min_length=1)
+    document_id: str = pydantic.Field(min_length=1)
+    chunk_id: str = pydantic.Field(min_length=1)
+    section: str | None = None
     score: float = pydantic.Field(ge=0, le=1)
 
 
@@ -123,6 +135,7 @@ class AgentResponse(pydantic.BaseModel):
     status: AgentRunStatus
     answer: str = pydantic.Field(min_length=1)
     sources: list[str] = pydantic.Field(default_factory=list)
+    citations: list[Citation] = pydantic.Field(default_factory=list)
     product_codes: list[str] = pydantic.Field(default_factory=list)
     tool_calls: list[ToolCallTrace] = pydantic.Field(default_factory=list)
     memory_used: list[int] = pydantic.Field(default_factory=list)

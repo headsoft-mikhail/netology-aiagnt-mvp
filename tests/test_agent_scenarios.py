@@ -6,6 +6,7 @@ import sqlite3
 import typing
 
 import faker as faker_lib
+import pydantic
 import pytest
 import qdrant_client.models
 
@@ -28,6 +29,9 @@ ROUTER_PRODUCT_CODE: typing.Final = "RTR-TP-AX23"
 MESH_PRODUCT_CODE: typing.Final = "MSH-KN-BUDDY-2"
 KNOWLEDGE_QUERY: typing.Final = "требования к роутеру для гигабитного тарифа"
 KNOWLEDGE_SOURCE: typing.Final = "router_selection.txt"
+KNOWLEDGE_DOCUMENT_ID: typing.Final = "router-selection-document"
+KNOWLEDGE_CHUNK_ID: typing.Final = "router-selection-chunk"
+KNOWLEDGE_SECTION: typing.Final = "Выбор скорости WAN-порта"
 KNOWLEDGE_TEXT: typing.Final = "Для тарифа 1 Гбит/с нужен WAN-порт не менее 1 Гбит/с."
 MESH_KNOWLEDGE_QUERY: typing.Final = "выбор Mesh-системы для большой площади"
 MESH_KNOWLEDGE_SOURCE: typing.Final = "coverage_and_mesh.txt"
@@ -36,6 +40,8 @@ MEMORY_LIMIT: typing.Final = 10
 NO_RESULT_MAX_PRICE: typing.Final = 100
 CATALOG_RESULT_LIMIT: typing.Final = 3
 CONTEXT_MIN_SCORE: typing.Final = 0.8
+MAX_CONTEXT_TOKENS: typing.Final = 1800
+CONTEXT_TOKENIZER_MODEL: typing.Final = "text-embedding-3-small"
 RETRIEVAL_SCORE: typing.Final = 0.95
 TEST_MODEL_NAME: typing.Final = "scripted-test-model"
 UNAVAILABLE_MODEL_NAME: typing.Final = "unavailable-test-model"
@@ -44,6 +50,8 @@ LLM_COMPONENT_FIELD: typing.Final = 'component="llm"'
 INVALID_LLM_ERROR_CODE_FIELD: typing.Final = 'error_code="invalid_llm_response"'
 INVALID_LLM_ERROR_TYPE_FIELD: typing.Final = 'error_type="InvalidLLMResponseError"'
 MEMORY_DATABASE_ERROR: typing.Final = "simulated memory database failure"
+UNKNOWN_KNOWLEDGE_QUERY: typing.Final = "несуществующая инструкция"
+RETRIEVAL_ERROR_MESSAGE: typing.Final = "simulated retrieval failure"
 KNOWLEDGE_CASES: typing.Final = (
     pytest.param(
         "TC-RAG-001",
@@ -176,19 +184,34 @@ INVALID_MEMORY_CASES: typing.Final = (
 )
 
 
+def validate_scripted_response[ResponseModel: pydantic.BaseModel](
+    output_type: type[ResponseModel],
+    response: dict[str, object],
+) -> ResponseModel:
+    try:
+        return output_type.model_validate(response)
+    except pydantic.ValidationError as error:
+        raise llm_client.InvalidLLMResponseError(f"LLM returned invalid {output_type.__name__}.") from error
+
+
 class ScriptedChatClient:
     def __init__(self, responses: list[dict[str, object]]) -> None:
-        self.responses = [json.dumps(response, ensure_ascii=False) for response in responses]
+        self.responses = responses.copy()
         self.calls: list[tuple[str, str]] = []
 
     @property
     def model_name(self) -> str:
         return TEST_MODEL_NAME
 
-    def complete(self, system_prompt: str, user_prompt: str, *, json_mode: bool) -> str:
-        assert json_mode
+    def complete[ResponseModel: pydantic.BaseModel](
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        output_type: type[ResponseModel],
+    ) -> ResponseModel:
         self.calls.append((system_prompt, user_prompt))
-        return self.responses.pop(0)
+        return validate_scripted_response(output_type, self.responses.pop(0))
 
 
 class FakeRetrievalClient:
@@ -204,9 +227,11 @@ class FakeRetrievalClient:
                 version=1,
                 score=RETRIEVAL_SCORE,
                 payload={
-                    "chunk_id": "router-1",
+                    "chunk_id": KNOWLEDGE_CHUNK_ID,
+                    "document_id": KNOWLEDGE_DOCUMENT_ID,
                     "source": source,
                     "text": text,
+                    "section": KNOWLEDGE_SECTION,
                 },
             )
         ]
@@ -218,9 +243,15 @@ class EmptyRetrievalClient:
         return []
 
 
+class UnavailableRetrievalClient:
+    def top_k(self, query: str) -> typing.NoReturn:
+        del query
+        raise RuntimeError(RETRIEVAL_ERROR_MESSAGE)
+
+
 class FailOnceChatClient:
     def __init__(self, response: dict[str, object]) -> None:
-        self.response = json.dumps(response, ensure_ascii=False)
+        self.response = response
         self.calls: list[tuple[str, str]] = []
         self.failed = False
 
@@ -228,13 +259,18 @@ class FailOnceChatClient:
     def model_name(self) -> str:
         return TEST_MODEL_NAME
 
-    def complete(self, system_prompt: str, user_prompt: str, *, json_mode: bool) -> str:
-        assert json_mode
+    def complete[ResponseModel: pydantic.BaseModel](
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        output_type: type[ResponseModel],
+    ) -> ResponseModel:
         self.calls.append((system_prompt, user_prompt))
         if not self.failed:
             self.failed = True
             raise llm_client.LLMUnavailableError("Temporary LLM failure in test")
-        return self.response
+        return validate_scripted_response(output_type, self.response)
 
 
 @dataclasses.dataclass(kw_only=True, slots=True)
@@ -249,7 +285,14 @@ class UnavailableChatClient:
     def model_name(self) -> str:
         return UNAVAILABLE_MODEL_NAME
 
-    def complete(self, system_prompt: str, user_prompt: str, *, json_mode: bool) -> typing.NoReturn:
+    def complete[ResponseModel: pydantic.BaseModel](
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        output_type: type[ResponseModel],
+    ) -> typing.NoReturn:
+        del system_prompt, user_prompt, output_type
         raise llm_client.LLMUnavailableError("LLM unavailable in test")
 
 
@@ -289,7 +332,11 @@ def create_tool_registry(
         tools=(
             search_knowledge_base.KnowledgeBaseSearchTool(
                 retrieval_client=retrieval_client or FakeRetrievalClient(),
-                context_builder=context.ContextBuilder(min_score=CONTEXT_MIN_SCORE),
+                context_builder=context.ContextBuilder(
+                    min_score=CONTEXT_MIN_SCORE,
+                    max_context_tokens=MAX_CONTEXT_TOKENS,
+                    tokenizer_model=CONTEXT_TOKENIZER_MODEL,
+                ),
             ),
             search_products.ProductSearchTool(catalog=catalog),
         )
@@ -352,6 +399,15 @@ def test_agent_uses_memory_rag_and_catalog_for_router_selection(
     assert [call.tool_name for call in result.tool_calls] == ["search_knowledge_base", "search_products"]
     assert result.product_codes == [ROUTER_PRODUCT_CODE]
     assert result.sources == [KNOWLEDGE_SOURCE]
+    assert result.citations == [
+        contracts.Citation(
+            source=KNOWLEDGE_SOURCE,
+            document_id=KNOWLEDGE_DOCUMENT_ID,
+            chunk_id=KNOWLEDGE_CHUNK_ID,
+            section=KNOWLEDGE_SECTION,
+            score=RETRIEVAL_SCORE,
+        )
+    ]
     assert result.memory_used
     assert TEST_BUDGET in chat_client.calls[1][1]
     assert TEST_EXCLUDED_BRAND in chat_client.calls[1][1]
@@ -1000,7 +1056,76 @@ def test_agent_answers_knowledge_questions_using_rag(
     assert result.status is contracts.AgentRunStatus.COMPLETED
     assert result.answer == answer
     assert result.sources == [KNOWLEDGE_SOURCE]
+    assert result.citations[0].document_id == KNOWLEDGE_DOCUMENT_ID
+    assert result.citations[0].chunk_id == KNOWLEDGE_CHUNK_ID
     assert [call.tool_name for call in result.tool_calls] == [search_knowledge_base.SEARCH_KNOWLEDGE_BASE_TOOL_NAME]
+
+
+@pytest.mark.report_case("TC-RAG-NOT-FOUND-001")
+def test_agent_does_not_ask_llm_to_answer_without_rag_context(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+) -> None:
+    memory, catalog = repositories
+    chat_client: typing.Final = ScriptedChatClient(
+        [
+            {
+                "actions": ["search_knowledge_base"],
+                "knowledge_query": UNKNOWN_KNOWLEDGE_QUERY,
+            }
+        ]
+    )
+    runner: typing.Final = agent.AgentRunner(
+        memory=memory,
+        llm=service.LLMService(chat_client=chat_client),
+        tool_registry=create_tool_registry(catalog, EmptyRetrievalClient()),
+    )
+
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        reporting.request("TC-RAG-NOT-FOUND-001"),
+        session_id=TEST_SESSION_ID,
+    )
+    reporting.record_agent_response("TC-RAG-NOT-FOUND-001", result)
+
+    assert result.status is contracts.AgentRunStatus.NOT_FOUND
+    assert result.answer == search_knowledge_base.NO_KNOWLEDGE_RESULTS_MESSAGE
+    assert result.citations == []
+    assert result.tool_calls[0].status is contracts.ToolStatus.NO_RESULTS
+    assert len(chat_client.calls) == 1
+
+
+@pytest.mark.report_case("TC-RAG-ERROR-001")
+def test_agent_handles_unavailable_rag_without_retry(
+    repositories: tuple[memory_repository.MemoryRepository, catalog_repository.ProductsRepository],
+) -> None:
+    memory, catalog = repositories
+    chat_client: typing.Final = ScriptedChatClient(
+        [
+            {
+                "actions": ["search_knowledge_base"],
+                "knowledge_query": KNOWLEDGE_QUERY,
+            }
+        ]
+    )
+    runner: typing.Final = agent.AgentRunner(
+        memory=memory,
+        llm=service.LLMService(chat_client=chat_client),
+        tool_registry=create_tool_registry(catalog, UnavailableRetrievalClient()),
+    )
+
+    result: typing.Final = runner.run(
+        TEST_USER_ID,
+        reporting.request("TC-RAG-ERROR-001"),
+        session_id=TEST_SESSION_ID,
+    )
+    reporting.record_agent_response("TC-RAG-ERROR-001", result)
+
+    assert result.status is contracts.AgentRunStatus.FAILED
+    assert result.citations == []
+    assert len(result.tool_calls) == 1
+    assert result.tool_calls[0].status is contracts.ToolStatus.ERROR
+    assert result.errors[0].code is contracts.ErrorCode.KNOWLEDGE_BASE_UNAVAILABLE
+    assert len(chat_client.calls) == 1
 
 
 @pytest.mark.parametrize(

@@ -35,11 +35,9 @@ def search_knowledge_base(
 
     try:
         retrieval_results: typing.Final = retrieval_client.top_k(normalized_query)
-        relevant_points: typing.Final = [
-            point for point in retrieval_results if point.score >= context_builder.min_score
-        ]
+        relevant_points: typing.Final = context_builder.select_points(retrieval_results)
         fragments: typing.Final = [_to_fragment(point) for point in relevant_points]
-        context: typing.Final = context_builder.build_context(retrieval_results)
+        context: typing.Final = context_builder.build_context(relevant_points)
     except Exception:
         LOGGER_OBJ.debug("Knowledge base search failed", exc_info=True)
         return contracts.KnowledgeBaseSearchResult(
@@ -84,7 +82,9 @@ def _to_fragment(point: ScoredPoint) -> contracts.KnowledgeFragment:
     payload: typing.Final = point.payload or {}
     return contracts.KnowledgeFragment(
         chunk_id=str(payload.get("chunk_id", "")),
+        document_id=str(payload.get("document_id", "")),
         text=str(payload.get("text", "")),
         source=str(payload.get("source", "")),
+        section=str(section) if (section := payload.get("section")) else None,
         score=point.score,
     )

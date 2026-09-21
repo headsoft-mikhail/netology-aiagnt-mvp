@@ -2,7 +2,7 @@ import argparse
 import shutil
 import typing
 
-from ai_agent.rag.pipelines import config
+from ai_agent.rag.pipelines.config import rag_pipeline_config
 
 
 def main() -> None:
@@ -18,30 +18,28 @@ def main() -> None:
 
     args: typing.Final = parser.parse_args()
 
-    pipeline_config: typing.Final = config.load_pipeline_config()
-
     if args.command == "prepare":
         from ai_agent.rag.pipelines.prepare.pipeline import RAGPreparePipeline
 
-        pipeline = RAGPreparePipeline(pipeline_config)
+        pipeline = RAGPreparePipeline(rag_pipeline_config)
     elif args.command == "chunk":
         from ai_agent.rag.pipelines.chunk.pipeline import RAGChunkPipeline
 
-        pipeline = RAGChunkPipeline(pipeline_config)
+        pipeline = RAGChunkPipeline(rag_pipeline_config)
     elif args.command == "embedding":
         from ai_agent.rag.pipelines.embeddings.pipeline import RAGEmbeddingsPipeline
 
-        pipeline = RAGEmbeddingsPipeline(pipeline_config)
+        pipeline = RAGEmbeddingsPipeline(rag_pipeline_config)
     elif args.command == "vector_store":
         from ai_agent.rag.pipelines.vector_store.pipeline import RAGVectorStorePipeline
 
-        pipeline = RAGVectorStorePipeline(pipeline_config)
+        pipeline = RAGVectorStorePipeline(rag_pipeline_config)
     elif args.command == "clear":
         for directory in (
-            pipeline_config.paths.prepared,
-            pipeline_config.paths.chunks,
-            pipeline_config.paths.embeddings,
-            pipeline_config.paths.vector_store,
+            rag_pipeline_config.paths.prepared,
+            rag_pipeline_config.paths.chunks,
+            rag_pipeline_config.paths.embeddings,
+            rag_pipeline_config.paths.vector_store,
         ):
             if directory.exists():
                 shutil.rmtree(directory)

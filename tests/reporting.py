@@ -56,6 +56,7 @@ def record_agent_response(
         "status": response.status.value,
         "answer": response.answer,
         "sources": response.sources,
+        "citations": [citation.model_dump(mode="json") for citation in response.citations],
         "product_codes": response.product_codes,
         "memory": {
             "used_fact_ids": response.memory_used,

@@ -9,6 +9,22 @@ from ai_agent.rag import helpers
 from ai_agent.rag.retrieval.config import RetrievalConfig
 
 
+def is_vector_store_ready(config: RetrievalConfig) -> bool:
+    if not config.vector_store_path.is_dir():
+        return False
+
+    client: qdrant_client.QdrantClient | None = None
+    try:
+        helpers.configure_local_sqlite_thread_check()
+        client = qdrant_client.QdrantClient(path=str(config.vector_store_path))
+        return client.collection_exists(config.collection_name)
+    except Exception:  # noqa: BLE001
+        return False
+    finally:
+        if client is not None:
+            client.close()
+
+
 class RetrievalClient:
     def __init__(self, config: RetrievalConfig, *, local_files_only: bool = True) -> None:
         self.config = config

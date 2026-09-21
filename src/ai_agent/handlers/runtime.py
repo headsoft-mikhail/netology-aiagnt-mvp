@@ -101,11 +101,27 @@ class RunContext:
         *,
         product_codes: list[str] | None = None,
     ) -> contracts.AgentResponse:
-        sources: typing.Final = self.agent_state.knowledge_result.sources if self.agent_state.knowledge_result else []
+        knowledge_result: typing.Final = self.agent_state.knowledge_result
+        sources: typing.Final = knowledge_result.sources if knowledge_result else []
+        citations: typing.Final = (
+            [
+                contracts.Citation(
+                    source=fragment.source,
+                    document_id=fragment.document_id,
+                    chunk_id=fragment.chunk_id,
+                    section=fragment.section,
+                    score=fragment.score,
+                )
+                for fragment in knowledge_result.fragments
+            ]
+            if knowledge_result
+            else []
+        )
         response: typing.Final = contracts.AgentResponse(
             status=status,
             answer=answer,
             sources=sources,
+            citations=citations,
             product_codes=product_codes or [],
             tool_calls=self.agent_state.tool_calls,
             memory_used=[fact.id for fact in self.agent_state.relevant_memory],
@@ -124,6 +140,7 @@ class RunContext:
             ),
             status=status.value,
             tool_calls=len(response.tool_calls),
+            citations=len(response.citations),
             products=len(response.product_codes),
             errors=len(response.errors),
         )

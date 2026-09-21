@@ -15,6 +15,13 @@ REQUIRED_CASE_FIELDS: typing.Final = {
 }
 MINIMUM_REPORT_CASES: typing.Final = 20
 MINIMUM_CASES_PER_DIALOGUE_GROUP: typing.Final = 2
+REQUIRED_TEST_IDS: typing.Final = [
+    "TC-RAG-001",
+    "TC-CATALOG-001",
+    "TC-MEMORY-007",
+    "TC-RAG-NOT-FOUND-001",
+    "TC-RAG-ERROR-001",
+]
 DIALOGUE_TYPE_GROUPS: typing.Final = (
     {"main"},
     {"alternative"},
@@ -33,7 +40,7 @@ def test_report_contains_complete_results_for_all_dialogue_groups() -> None:
     assert all(REQUIRED_CASE_FIELDS.issubset(case) for case in cases)
     assert all(case["user_id"] and case["session_id"] for case in cases)
     required_cases: typing.Final = [case for case in cases if case.get("required") is True]
-    assert [case["id"] for case in required_cases] == report["required_test_ids"]
-    assert [case["type"] for case in required_cases] == ["main", "error"]
+    assert report["required_test_ids"] == REQUIRED_TEST_IDS
+    assert [case["id"] for case in required_cases] == REQUIRED_TEST_IDS
     for dialogue_types in DIALOGUE_TYPE_GROUPS:
         assert sum(case["type"] in dialogue_types for case in cases) >= MINIMUM_CASES_PER_DIALOGUE_GROUP
