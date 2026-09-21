@@ -4,16 +4,23 @@ import sys
 import typing
 
 LOG_FORMAT: typing.Final = "%(asctime)s %(levelname)s %(name)s %(message)s"
+LOG_LEVEL_NAMES: typing.Final = ("critical", "error", "warning", "info", "debug")
 
 
-def configure(*, verbose: bool = False, debug: bool = False) -> None:
-    level: typing.Final = logging.DEBUG if debug else logging.INFO if verbose else logging.WARNING
+def configure(*, level: int = logging.INFO) -> None:
     logging.basicConfig(
         level=level,
         format=LOG_FORMAT,
         stream=sys.stderr,
         force=True,
     )
+
+
+def level_from_name(name: str) -> int:
+    level: typing.Final = logging.getLevelNamesMapping().get(name.upper())
+    if level is None:
+        raise ValueError(f"Unknown logging level: {name}")
+    return level
 
 
 def event(

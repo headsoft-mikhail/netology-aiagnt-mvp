@@ -68,7 +68,7 @@ class LLMClient:
             )
             result: typing.Final = agent.run_sync(user_prompt)
         except pydantic_ai.exceptions.ModelAPIError as error:
-            raise LLMUnavailableError("LLM API недоступен.") from error
+            raise LLMUnavailableError(f"LLM API недоступен: {error}") from error
         except pydantic_ai.exceptions.UnexpectedModelBehavior as error:
             raise InvalidLLMResponseError("LLM API вернул ответ неизвестного формата.") from error
         return result.output

@@ -30,12 +30,15 @@ def main() -> int:
         help="Идентификатор текущего диалога (по умолчанию создаётся автоматически)",
     )
     parser.add_argument("--trace", action="store_true", help="Вывести структурированный trace в stderr")
-    log_level: typing.Final = parser.add_mutually_exclusive_group()
-    log_level.add_argument("--verbose", action="store_true", help="Показывать этапы работы агента")
-    log_level.add_argument("--debug", action="store_true", help="Показывать подробную диагностику")
+    parser.add_argument(
+        "--log-level",
+        choices=logging.LOG_LEVEL_NAMES,
+        default="info",
+        help="Уровень логирования (по умолчанию: info)",
+    )
     args: typing.Final = parser.parse_args()
 
-    logging.configure(verbose=args.verbose, debug=args.debug)
+    logging.configure(level=logging.level_from_name(args.log_level))
 
     try:
         return start_agent(

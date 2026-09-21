@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import pathlib
 import typing
 
@@ -20,11 +21,19 @@ TEST_ANSWER: typing.Final = "Выберите роутер с гигабитны
 TEST_SOURCE: typing.Final = "router_selection.txt"
 TEST_DOCUMENT_ID: typing.Final = "router-selection-document"
 TEST_CHUNK_ID: typing.Final = "router-selection-chunk"
+LLM_ERROR_MESSAGE: typing.Final = "Не удалось получить корректный ответ языковой модели."
 
 
 class FakeAgentRunner:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        status: contracts.AgentRunStatus = contracts.AgentRunStatus.COMPLETED,
+        errors: list[contracts.ToolError] | None = None,
+    ) -> None:
         self.calls: list[tuple[str, str, str | None]] = []
+        self.status = status
+        self.errors = errors or []
 
     def run(
         self,
@@ -35,9 +44,9 @@ class FakeAgentRunner:
     ) -> contracts.AgentResponse:
         self.calls.append((user_id, user_message, session_id))
         return contracts.AgentResponse(
-            status=contracts.AgentRunStatus.COMPLETED,
-            answer=TEST_ANSWER,
-            sources=[TEST_SOURCE],
+            status=self.status,
+            answer=LLM_ERROR_MESSAGE if self.errors else TEST_ANSWER,
+            sources=[TEST_SOURCE] if not self.errors else [],
             citations=[
                 contracts.Citation(
                     source=TEST_SOURCE,
@@ -45,29 +54,23 @@ class FakeAgentRunner:
                     chunk_id=TEST_CHUNK_ID,
                     score=0.95,
                 )
-            ],
+            ]
+            if not self.errors
+            else [],
             request_id="api-test-request",
             session_id=session_id or TEST_SESSION_ID,
+            errors=self.errors,
         )
 
 
 def test_health_ready_and_chat_endpoints(
     tmp_path: pathlib.Path,
     monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    catalog_path: typing.Final = tmp_path / "catalog.db"
-    vector_store_path: typing.Final = tmp_path / "vector-store"
-    catalog_path.parent.mkdir(parents=True, exist_ok=True)
-    catalog_path.touch(exist_ok=True)
-    vector_store_path.mkdir(parents=True, exist_ok=True)
-    monkeypatch.setattr(routes.catalog_config, "database_path", catalog_path)
-    monkeypatch.setattr(routes.rag_retrieval_config, "vector_store_path", vector_store_path)
+    configure_ready_dependencies(tmp_path, monkeypatch)
+    caplog.set_level(logging.DEBUG, logger=routes.__name__)
 
-    def vector_store_is_ready(config: object) -> bool:
-        del config
-        return True
-
-    monkeypatch.setattr(routes.retrieval, "is_vector_store_ready", vector_store_is_ready)
     fake_agent: typing.Final = FakeAgentRunner()
     application: typing.Final = service_app.create_application(
         create_test_container(typing.cast(AgentRunner, fake_agent))
@@ -88,6 +91,57 @@ def test_health_ready_and_chat_endpoints(
     assert chat_response.json()["answer"] == TEST_ANSWER
     assert chat_response.json()["citations"][0]["chunk_id"] == TEST_CHUNK_ID
     assert fake_agent.calls == [(TEST_USER_ID, TEST_MESSAGE, TEST_SESSION_ID)]
+    trace_log: typing.Final = next(record for record in caplog.records if "event=agent_trace" in record.message)
+    assert TEST_ANSWER in trace_log.message
+    assert TEST_SESSION_ID in trace_log.message
+
+
+def test_chat_reports_llm_unavailable_as_service_unavailable(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    configure_ready_dependencies(tmp_path, monkeypatch)
+    llm_error: typing.Final = contracts.ToolError(
+        code=contracts.ErrorCode.LLM_UNAVAILABLE,
+        message=LLM_ERROR_MESSAGE,
+    )
+    fake_agent: typing.Final = FakeAgentRunner(
+        status=contracts.AgentRunStatus.FAILED,
+        errors=[llm_error],
+    )
+    application: typing.Final = service_app.create_application(
+        create_test_container(typing.cast(AgentRunner, fake_agent))
+    )
+
+    _, _, chat_response = asyncio.run(
+        request_application(
+            application,
+            include_session_id=True,
+        )
+    )
+
+    assert chat_response.status_code == 503
+    assert chat_response.json()["status"] == contracts.AgentRunStatus.FAILED
+    assert chat_response.json()["errors"] == [llm_error.model_dump(mode="json")]
+
+
+def configure_ready_dependencies(
+    tmp_path: pathlib.Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    catalog_path: typing.Final = tmp_path / "catalog.db"
+    vector_store_path: typing.Final = tmp_path / "vector-store"
+    catalog_path.parent.mkdir(parents=True, exist_ok=True)
+    catalog_path.touch(exist_ok=True)
+    vector_store_path.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(routes.catalog_config, "database_path", catalog_path)
+    monkeypatch.setattr(routes.rag_retrieval_config, "vector_store_path", vector_store_path)
+
+    def vector_store_is_ready(config: object) -> bool:
+        del config
+        return True
+
+    monkeypatch.setattr(routes.retrieval, "is_vector_store_ready", vector_store_is_ready)
 
 
 def test_unprepared_application_reports_not_ready() -> None:

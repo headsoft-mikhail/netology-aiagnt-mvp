@@ -10,7 +10,8 @@ PREPARE_COMMAND: typing.Final = "just prepare_agent"
 INTERNAL_ERROR_DETAILS: typing.Final = "internal path must not be shown"
 USER_ID_UNDERSCORE_OPTION: typing.Final = "--user_id"
 SESSION_ID_UNDERSCORE_OPTION: typing.Final = "--session_id"
-DEBUG_OPTION: typing.Final = "--debug"
+LOG_LEVEL_OPTION: typing.Final = "--log-level"
+DEBUG_LEVEL: typing.Final = "debug"
 
 
 def test_startup_failure_is_reported_without_traceback(
@@ -58,7 +59,8 @@ def test_cli_accepts_underscore_aliases_for_identifiers(
         "argv",
         [
             "ai-agent",
-            DEBUG_OPTION,
+            LOG_LEVEL_OPTION,
+            DEBUG_LEVEL,
             USER_ID_UNDERSCORE_OPTION,
             user_id,
             SESSION_ID_UNDERSCORE_OPTION,
